@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 
 # Initialize Pygame
 pygame.init()
@@ -105,25 +106,34 @@ while running:
     # Handle movement
     keys = pygame.key.get_pressed()
     is_moving = False
-    new_pos = player.position.copy()
+    dx, dy = 0, 0   # Initialize movement changes
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        new_pos[0] -= player.speed
+        dx -= player.speed
         current_direction = 'left'
         is_moving = True
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        new_pos[0] += player.speed
+        dx += player.speed
         current_direction = 'right'
         is_moving = True
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        new_pos[1] -= player.speed
+        dy -= player.speed
         current_direction = 'up'
         is_moving = True
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        new_pos[1] += player.speed
+        dy += player.speed
         current_direction = 'down'
         is_moving = True
     if keys[pygame.K_ESCAPE]:
         running = False
+
+    # Normalize diagonal movement
+    if dx != 0 and dy != 0:
+        factor = (player.speed / math.sqrt(dx**2 + dy**2))
+        dx *= factor
+        dy *= factor
+
+    # Update position and collision
+    new_pos = [player.position[0] + dx, player.position[1] + dy]
 
     # Collision detection
     new_rect = pygame.Rect(new_pos[0], new_pos[1] + SPRITE_SIZE - 20, 80, 20)
