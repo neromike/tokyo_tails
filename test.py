@@ -1,6 +1,7 @@
 import pygame
 import sys
 import math
+import random
 
 # Initialize Pygame
 pygame.init()
@@ -109,13 +110,32 @@ player.sprites = {
     'idle_up': get_sprite(3, 4)
 }
 
-# Cat setup
-class Cat(Actor):
+# NPC class
+class NPC(Actor):
     def __init__(self, position, energy, speed):
         super().__init__(position, energy, speed)
         self.fullness = 50
         self.bored = 50
-cat = Cat(position=[550, 470], energy=20, speed=2)
+        self.motivation = 0
+        self.motivation_threshold = 50  # Define a threshold for motivation
+        self.move_chance = 1.0  # 50% chance to move when motivated
+        self.direction = 0
+        self.task = ''
+        self.subtask = ''
+    def update(self):
+        # Randomly increase motivation
+        self.motivation += random.randint(0, 10)  # Adjust the range as needed
+
+        # Check if motivation is above threshold
+        if self.motivation > self.motivation_threshold:
+            # Decide whether to move
+            if random.random() < self.move_chance:
+                self.direction = (self.direction + random.randint(-20,20)) % 360
+                self.move(self.direction, self.speed)
+                self.motivation = 0
+
+# Cat setup
+cat = NPC(position=[550, 470], energy=20, speed=5)
 sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
 cat.sprites = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
@@ -161,6 +181,7 @@ cat_game_object = GameObject(None, cat.position, is_dynamic=True)
 game_objects.append(cat_game_object)
 
 # Inventory setup
+active_slot_index = 0
 inventory = []
 def add_to_inventory(item):
     """Adds an item to the inventory if there's space."""
@@ -175,19 +196,27 @@ def remove_from_inventory(item):
         return True
     return False
 def draw_inventory_gui():
-    base_x, base_y = (SCREEN_WIDTH / 2) - ((INV_SIZE * INV_NUM) / 2), 10  # Starting position for the inventory GUI
+    base_x, base_y = (SCREEN_WIDTH / 2) - ((INV_SIZE * INV_NUM) / 2), 10
     padding = 10
+    border_width = 3
+    grey_color = (128, 128, 128)
+    black_color = (0, 0, 0)
+    bar_color = (255, 165, 0)
 
     bar_width = (INV_SIZE * INV_NUM) + (padding * (INV_NUM - 1))
-    bar_height = INV_SIZE + 20  # Adjust the height as needed
-    orange_color = (255, 165, 0)  # RGB color for orange
-    pygame.draw.rect(screen, orange_color, (base_x - 10, base_y - 10, bar_width + 20, bar_height))
-    empty_slot_color = (255, 0, 0)  # Color for empty slots
+    bar_height = INV_SIZE + 20
+    pygame.draw.rect(screen, bar_color, (base_x - 10, base_y - 10, bar_width + 20, bar_height))
+    empty_slot_color = (255, 0, 0)
 
     for i in range(INV_NUM):
-        # Calculate the position for each item
         item_x = base_x + (i * (INV_SIZE + padding))
         item_y = base_y
+
+        # Determine border color (black for active slot, grey for others)
+        border_color = black_color if i == active_slot_index else grey_color
+
+        # Draw border for the slot
+        pygame.draw.rect(screen, border_color, (item_x - border_width, item_y - border_width, INV_SIZE + (border_width * 2), INV_SIZE + (border_width * 2)))
 
         if i < len(inventory):
             # Draw item image
@@ -196,6 +225,8 @@ def draw_inventory_gui():
         else:
             # Draw empty slot
             pygame.draw.rect(screen, empty_slot_color, (item_x, item_y, INV_SIZE, INV_SIZE))
+
+
 add_to_inventory("schmuppy")
 add_to_inventory("queso")
 add_to_inventory("black cat")
@@ -213,6 +244,23 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            # Get the mouse position
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            # Adjust mouse position based on camera offset
+            adjusted_mouse_x = mouse_x + camera_offset[0]
+            adjusted_mouse_y = mouse_y + camera_offset[1]
+
+            # Check if the player is near the cat
+            player_rect = pygame.Rect(player.position[0], player.position[1], SPRITE_SIZE, SPRITE_SIZE)
+            cat_rect = pygame.Rect(cat.position[0], cat.position[1], SPRITE_SIZE, SPRITE_SIZE)
+
+            if player_rect.colliderect(cat_rect.inflate(20, 20)):  # Inflate the cat's rect for a proximity check
+                # Check if the mouse click is on the cat
+                if cat_rect.collidepoint(adjusted_mouse_x, adjusted_mouse_y):
+                    # Implement interaction logic here
+                    print("Player clicked on the cat!")
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
@@ -237,16 +285,24 @@ while running:
     elif keys[pygame.K_ESCAPE]:
         running = False
 
+    # Update player game object sprite and position
     if player.is_moving:
         player.pose_index = (player.pose_index + 1) % 4
         sprite_to_draw = player.sprites[player.current_direction][player.pose_index]
     else:
         sprite_to_draw = player.sprites[f'idle_{player.current_direction}']
-
-    # Update player game object sprite and position
     player_game_object.set_dynamic_sprite(sprite_to_draw)
     player_game_object.position = player.position
 
+    # Update NPC states
+    cat.update()
+
+    # Update cat game object sprite and position
+    if cat.is_moving:
+        cat.pose_index = (cat.pose_index + 1) % 4
+        sprite_to_draw = cat.sprites[cat.current_direction][cat.pose_index]
+    else:
+        sprite_to_draw = cat.sprites[f'idle_{cat.current_direction}']
     cat_game_object.set_dynamic_sprite(sprite_to_draw)
 
     # Calculate camera offset based on player position
