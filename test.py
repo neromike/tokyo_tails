@@ -6,7 +6,7 @@ pygame.init()
 
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
-SPRITE_SIZE = 256
+SPRITE_SIZE = 128
 FONT_SIZE = 20
 
 # Set up the screen
@@ -14,12 +14,15 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Tokyo Tails")
 font = pygame.font.Font(None, FONT_SIZE)
 
-# Load background layers
-background_layer_1 = pygame.image.load('background_frame.png').convert_alpha()
-background_layer_2 = pygame.image.load('background_test.png').convert_alpha()
+z_order = []
+
+# Load image assets
+background_layer_1 = pygame.image.load('background_cafe3.png').convert_alpha()
+BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
+furniture_table = pygame.image.load('asset_table.png').convert_alpha()
 
 # Load the sprite sheet
-sprite_sheet = pygame.image.load('sprite_player.png')  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load('sprite_player_128.png')  # Update with the path to your sprite sheet
 
 # Function to get sprite
 def get_sprite(x, y):
@@ -55,7 +58,7 @@ is_moving = False
 
 # Obstacle setup
 obstacle_pos = [570, 715]
-obstacle_rect = pygame.Rect(obstacle_pos[0], obstacle_pos[1], 180, 130)
+obstacle_rect = pygame.Rect(obstacle_pos[0] + 7, obstacle_pos[1] + 50, 157, 120)
 obstacle_color = (0, 128, 128)  # Some color for the obstacle
 
 # Inventory setup
@@ -85,6 +88,12 @@ def draw_inventory():
 add_to_inventory("schmuppy")
 add_to_inventory("queso")
 add_to_inventory("black cat")
+
+# Function to calculate camera offset
+def calculate_camera_offset(player_position):
+    x_offset = max(0, min(player_position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH))
+    y_offset = max(0, min(player_position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))
+    return x_offset, y_offset
 
 # Game loop
 running = True
@@ -127,12 +136,16 @@ while running:
         else:
             sprite_to_draw = player_sprites[f'idle_{current_direction}']
 
+     # Calculate camera offset based on player position
+    camera_offset = calculate_camera_offset(player.position)
+
     # Update the screen
-    screen.blit(background_layer_2, (0, 0))  # Draw the second background layer
-    screen.blit(background_layer_1, (0, 0))  # Draw the first background layer
-    pygame.draw.rect(screen, obstacle_color, obstacle_rect)  # Draw the obstacle
-    screen.blit(sprite_to_draw, player.position)
+    screen.blit(background_layer_1, (-camera_offset[0], -camera_offset[1]))
+    screen.blit(furniture_table, (obstacle_pos[0] - camera_offset[0], obstacle_pos[1] - camera_offset[1]))
+    screen.blit(sprite_to_draw, (player.position[0] - camera_offset[0], player.position[1] - camera_offset[1]))
     draw_inventory()
+    text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
+    screen.blit(text, (10, SCREEN_HEIGHT - 30))
 
     pygame.display.flip()
 
