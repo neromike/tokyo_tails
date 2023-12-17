@@ -24,6 +24,7 @@ BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
 background_layer_1 = pygame.image.load('background_cafe3.png').convert_alpha()
 furniture_table = pygame.image.load('asset_table.png').convert_alpha()
 furniture_shelf = pygame.image.load('asset_shelf.png').convert_alpha()
+furniture_cat_food = pygame.image.load('asset_cat_food.png').convert_alpha()
 item_images = {
     "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
     "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
@@ -36,7 +37,7 @@ def get_sprite(x, y):
     """Extracts and returns a single sprite from the sprite sheet."""
     image = pygame.Surface((SPRITE_SIZE, SPRITE_SIZE))
     image.blit(sprite_sheet, (0, 0), (x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE))
-    image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
+    #image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
     return image
 
 # Actor superclass
@@ -47,7 +48,7 @@ class Actor:
         self.speed = speed
         self.current_direction = 'down'
         self.pose_index = 0
-        self.sprites = {}
+        self.sprite = {}
         self.is_moving = False
     def move(self, angle, distance):
         # Set the actor to moving
@@ -98,8 +99,9 @@ class Player(Actor):
     def __init__(self, position, energy, speed):
         super().__init__(position, energy, speed)
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5)
-sprite_sheet = pygame.image.load('sprite_player_128.png')  # Update with the path to your sprite sheet
-player.sprites = {
+sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
+"""
+player.sprite = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
     'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1)],
     'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2)],
@@ -108,6 +110,19 @@ player.sprites = {
     'idle_left': get_sprite(1, 4),
     'idle_right': get_sprite(2, 4),
     'idle_up': get_sprite(3, 4)
+}
+"""
+player.sprite = {
+    'idle_down': get_sprite(0, 0),
+    'idle_up': get_sprite(0, 1),
+    'idle_right': get_sprite(0, 2),
+    'idle_left': get_sprite(0, 3),
+    'down': [get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0), get_sprite(4, 0), get_sprite(5, 0), get_sprite(6, 0)],
+    'up': [get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1), get_sprite(4, 1), get_sprite(5, 1), get_sprite(6, 1)],
+    'right': [get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2), get_sprite(4, 2), get_sprite(5, 2), get_sprite(6, 2)],
+    'left': [get_sprite(1, 3), get_sprite(2, 3), get_sprite(3, 3), get_sprite(4, 3), get_sprite(5, 3), get_sprite(6, 3)],
+    
+    
 }
 
 # NPC class
@@ -124,7 +139,7 @@ class NPC(Actor):
         self.subtask = ''
     def update(self):
         # Randomly increase motivation
-        self.motivation += random.randint(0, 10)  # Adjust the range as needed
+        #self.motivation += random.randint(0, 10)  # Adjust the range as needed
 
         # Check if motivation is above threshold
         if self.motivation > self.motivation_threshold:
@@ -133,11 +148,19 @@ class NPC(Actor):
                 self.direction = (self.direction + random.randint(-20,20)) % 360
                 self.move(self.direction, self.speed)
                 self.motivation = 0
+        
+        # Move towards the cat food
+        dx = cat_food_pos[0] - self.position[0]
+        dy = cat_food_pos[1] - self.position[1]
+        angle = math.degrees(math.atan2(-dy, dx)) % 360
+
+        # Move towards the cat food
+        #self.move(angle, self.speed)
 
 # Cat setup
 cat = NPC(position=[550, 470], energy=20, speed=5)
 sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
-cat.sprites = {
+cat.sprite = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
     'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1)],
     'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2)],
@@ -152,10 +175,13 @@ cat.sprites = {
 obstacles = []
 table_pos = [570, 715]
 shelf_pos = [65, 760]
+cat_food_pos = [875,330]
 table_obstacle = pygame.Rect(table_pos[0] + 7, table_pos[1] + 50, 157, 120)
 shelf_obstacle = pygame.Rect(shelf_pos[0] + 7, shelf_pos[1] + 110, 157, 40)
+cat_food_obstacle = pygame.Rect(cat_food_pos[0] + 7, cat_food_pos[1] + 110, 157, 40)
 obstacles.append(table_obstacle)
 obstacles.append(shelf_obstacle)
+obstacles.append(cat_food_obstacle)
 
 #Populate the game objects
 class GameObject:
@@ -174,6 +200,7 @@ game_objects = [
     GameObject(background_layer_1, (0, 0)),
     GameObject(furniture_table, (table_pos[0], table_pos[1])),
     GameObject(furniture_shelf, (shelf_pos[0], shelf_pos[1])),
+    GameObject(furniture_cat_food, (cat_food_pos[0], cat_food_pos[1])),
 ]
 player_game_object = GameObject(None, player.position, is_dynamic=True)
 game_objects.append(player_game_object)
@@ -287,10 +314,11 @@ while running:
 
     # Update player game object sprite and position
     if player.is_moving:
-        player.pose_index = (player.pose_index + 1) % 4
-        sprite_to_draw = player.sprites[player.current_direction][player.pose_index]
+        player.pose_index = (player.pose_index + 1) % 17
+        #print(player.pose_index, round(player.pose_index/3))
+        sprite_to_draw = player.sprite[player.current_direction][round(player.pose_index / 3)]
     else:
-        sprite_to_draw = player.sprites[f'idle_{player.current_direction}']
+        sprite_to_draw = player.sprite[f'idle_{player.current_direction}']
     player_game_object.set_dynamic_sprite(sprite_to_draw)
     player_game_object.position = player.position
 
@@ -300,9 +328,9 @@ while running:
     # Update cat game object sprite and position
     if cat.is_moving:
         cat.pose_index = (cat.pose_index + 1) % 4
-        sprite_to_draw = cat.sprites[cat.current_direction][cat.pose_index]
+        sprite_to_draw = cat.sprite[cat.current_direction][cat.pose_index]
     else:
-        sprite_to_draw = cat.sprites[f'idle_{cat.current_direction}']
+        sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
     cat_game_object.set_dynamic_sprite(sprite_to_draw)
 
     # Calculate camera offset based on player position
