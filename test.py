@@ -37,12 +37,14 @@ def get_sprite(x, y):
     """Extracts and returns a single sprite from the sprite sheet."""
     image = pygame.Surface((SPRITE_SIZE, SPRITE_SIZE))
     image.blit(sprite_sheet, (0, 0), (x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE))
-    #image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
+    image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
     return image
+
+
 
 # Actor superclass
 class Actor:
-    def __init__(self, position, energy, speed):
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
         self.position = position
         self.energy = energy
         self.speed = speed
@@ -50,6 +52,9 @@ class Actor:
         self.pose_index = 0
         self.sprite = {}
         self.is_moving = False
+        self.collision_rect_offset = collision_rect_offset
+        self.collision_rect_size = collision_rect_size
+
     def move(self, angle, distance):
         # Set the actor to moving
         self.is_moving = True
@@ -75,7 +80,8 @@ class Actor:
         new_pos = [self.position[0] + dx, self.position[1] + dy]
 
         # Check for X-axis collision
-        new_rect = pygame.Rect(new_pos[0], self.position[1] + SPRITE_SIZE - 20, 40, 20)
+        #new_rect = pygame.Rect(new_pos[0], self.position[1], SPRITE_SIZE, SPRITE_SIZE)
+        new_rect = self.real_rect(new_pos[0], self.position[1])
         x_collision = any(new_rect.colliderect(obstacle) for obstacle in obstacles)
 
         # Update actor's position if no collision on X-axis
@@ -83,7 +89,8 @@ class Actor:
             self.position[0] = new_pos[0]
 
         # Check for Y-axis collision
-        new_rect = pygame.Rect(self.position[0], new_pos[1] + SPRITE_SIZE - 20, 40, 20)
+        #new_rect = pygame.Rect(self.position[0], new_pos[1], SPRITE_SIZE, SPRITE_SIZE)
+        new_rect = self.real_rect(self.position[0], new_pos[1])
         y_collision = any(new_rect.colliderect(obstacle) for obstacle in obstacles)
 
         # Update player position if no collision on Y-axis
@@ -94,24 +101,22 @@ class Actor:
         if x_collision and y_collision:
             self.is_moving = False
 
+    def real_rect(self, x, y):
+        # Return the actual rect size for the sprite
+        return pygame.Rect(
+            x + self.collision_rect_offset[0],
+            y + self.collision_rect_offset[1],
+            self.collision_rect_size[0],
+            self.collision_rect_size[1]
+        )
+
+
 # Player setup
 class Player(Actor):
-    def __init__(self, position, energy, speed):
-        super().__init__(position, energy, speed)
-player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5)
+    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
+player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20))
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
-"""
-player.sprite = {
-    'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
-    'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1)],
-    'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2)],
-    'up': [get_sprite(0, 3), get_sprite(1, 3), get_sprite(2, 3), get_sprite(3, 3)],
-    'idle_down': get_sprite(0, 4),
-    'idle_left': get_sprite(1, 4),
-    'idle_right': get_sprite(2, 4),
-    'idle_up': get_sprite(3, 4)
-}
-"""
 player.sprite = {
     'idle_down': get_sprite(0, 0),
     'idle_up': get_sprite(0, 1),
@@ -127,8 +132,8 @@ player.sprite = {
 
 # NPC class
 class NPC(Actor):
-    def __init__(self, position, energy, speed):
-        super().__init__(position, energy, speed)
+    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
         self.fullness = 50
         self.bored = 50
         self.motivation = 0
@@ -158,7 +163,7 @@ class NPC(Actor):
         #self.move(angle, self.speed)
 
 # Cat setup
-cat = NPC(position=[550, 470], energy=20, speed=5)
+cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115), collision_rect_size=(30,10))
 sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
 cat.sprite = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
@@ -178,7 +183,7 @@ shelf_pos = [65, 760]
 cat_food_pos = [875,330]
 table_obstacle = pygame.Rect(table_pos[0] + 7, table_pos[1] + 50, 157, 120)
 shelf_obstacle = pygame.Rect(shelf_pos[0] + 7, shelf_pos[1] + 110, 157, 40)
-cat_food_obstacle = pygame.Rect(cat_food_pos[0] + 7, cat_food_pos[1] + 110, 157, 40)
+cat_food_obstacle = pygame.Rect(cat_food_pos[0] + 8, cat_food_pos[1] + 8, 40, 20)
 obstacles.append(table_obstacle)
 obstacles.append(shelf_obstacle)
 obstacles.append(cat_food_obstacle)
