@@ -9,20 +9,26 @@ pygame.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 SPRITE_SIZE = 128
 FONT_SIZE = 20
+INV_SIZE = 60            # Size of inventory items in pixels
+INV_NUM = 12             # Number of inventory slots shown
+MAX_INVENTORY_SIZE = 36  # Maximum number of items in the inventory
+
 
 # Set up the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Tokyo Tails")
 font = pygame.font.Font(None, FONT_SIZE)
 
-z_order = []
-
 # Load image assets
-background_layer_1 = pygame.image.load('background_cafe3.png').convert_alpha()
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
+background_layer_1 = pygame.image.load('background_cafe3.png').convert_alpha()
 furniture_table = pygame.image.load('asset_table.png').convert_alpha()
-
-# Load the sprite sheet
+item_images = {
+    "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
+    "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
+    "black cat": pygame.image.load('asset_item_black_cat.png').convert_alpha(),
+    "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha()
+}
 sprite_sheet = pygame.image.load('sprite_player_128.png')  # Update with the path to your sprite sheet
 
 # Function to get sprite
@@ -64,31 +70,39 @@ obstacle_color = (0, 128, 128)  # Some color for the obstacle
 
 # Inventory setup
 inventory = []
-MAX_INVENTORY_SIZE = 5  # Maximum number of items in the inventory
-
 def add_to_inventory(item):
     """Adds an item to the inventory if there's space."""
     if len(inventory) < MAX_INVENTORY_SIZE:
         inventory.append(item)
         return True
     return False
-
 def remove_from_inventory(item):
     """Removes an item from the inventory."""
     if item in inventory:
         inventory.remove(item)
         return True
     return False
+def draw_inventory_gui():
+    base_x, base_y = (SCREEN_WIDTH / 2) - ((INV_SIZE * INV_NUM) / 2), 10  # Starting position for the inventory GUI
+    spacing = INV_SIZE + 10  # Spacing between items
 
-def draw_inventory():
-    """Draws the inventory on the screen."""
     for i, item in enumerate(inventory):
-        text = font.render(f"{i + 1}: {item}", True, (255, 255, 255))
-        screen.blit(text, (10, 10 + i * (FONT_SIZE + 5)))
+        # Calculate the position for each item
+        item_x = base_x + i * spacing
+        item_y = base_y
+
+        # Draw item image
+        item_image = item_images[item]
+        screen.blit(item_image, (item_x, item_y))
+
+        # Draw item name or any other details
+        text = font.render(item, True, (255, 255, 255))
+        screen.blit(text, (item_x, item_y - FONT_SIZE))
 
 add_to_inventory("schmuppy")
 add_to_inventory("queso")
 add_to_inventory("black cat")
+add_to_inventory("orange cat")
 
 # Function to calculate camera offset
 def calculate_camera_offset(player_position):
@@ -153,9 +167,9 @@ while running:
     screen.blit(background_layer_1, (-camera_offset[0], -camera_offset[1]))
     screen.blit(furniture_table, (obstacle_pos[0] - camera_offset[0], obstacle_pos[1] - camera_offset[1]))
     screen.blit(sprite_to_draw, (player.position[0] - camera_offset[0], player.position[1] - camera_offset[1]))
-    draw_inventory()
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
     screen.blit(text, (10, SCREEN_HEIGHT - 30))
+    draw_inventory_gui()
 
     pygame.display.flip()
 
