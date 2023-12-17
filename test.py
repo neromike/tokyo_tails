@@ -7,7 +7,6 @@ pygame.init()
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 SPRITE_SIZE = 256
-SPEED = 5
 FONT_SIZE = 20
 
 # Set up the screen
@@ -21,7 +20,6 @@ background_layer_2 = pygame.image.load('background_test.png').convert_alpha()
 
 # Load the sprite sheet
 sprite_sheet = pygame.image.load('sprite_player.png')  # Update with the path to your sprite sheet
-#sprite_sheet = pygame.transform.scale(sprite_sheet, (SPRITE_SIZE * 4, SPRITE_SIZE * 4)) # Scale if needed
 
 # Function to get sprite
 def get_sprite(x, y):
@@ -32,8 +30,15 @@ def get_sprite(x, y):
     return image
 
 # Player setup
-player_pos = [SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2]
-player_rect = pygame.Rect(player_pos[0], player_pos[1] + SPRITE_SIZE - 20, 80, 20)
+class Player:
+    def __init__(self, position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100):
+        self.position = position
+        self.energy = energy
+        self.speed = 5
+
+player = Player()
+
+player_rect = pygame.Rect(player.position[0], player.position[1] + SPRITE_SIZE - 20, 80, 20)
 player_sprites = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
     'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1)],
@@ -91,28 +96,30 @@ while running:
     # Handle movement
     keys = pygame.key.get_pressed()
     is_moving = False
-    new_pos = player_pos.copy()
+    new_pos = player.position.copy()
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        new_pos[0] -= SPEED
+        new_pos[0] -= player.speed
         current_direction = 'left'
         is_moving = True
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        new_pos[0] += SPEED
+        new_pos[0] += player.speed
         current_direction = 'right'
         is_moving = True
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        new_pos[1] -= SPEED
+        new_pos[1] -= player.speed
         current_direction = 'up'
         is_moving = True
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        new_pos[1] += SPEED
+        new_pos[1] += player.speed
         current_direction = 'down'
         is_moving = True
+    if keys[pygame.K_ESCAPE]:
+        running = False
 
     # Collision detection
     new_rect = pygame.Rect(new_pos[0], new_pos[1] + SPRITE_SIZE - 20, 80, 20)
     if not new_rect.colliderect(obstacle_rect):
-        player_pos = new_pos
+        player.position = new_pos
         player_rect = new_rect
         if is_moving:
             pose_index = (pose_index + 1) % 4
@@ -124,7 +131,7 @@ while running:
     screen.blit(background_layer_2, (0, 0))  # Draw the second background layer
     screen.blit(background_layer_1, (0, 0))  # Draw the first background layer
     pygame.draw.rect(screen, obstacle_color, obstacle_rect)  # Draw the obstacle
-    screen.blit(sprite_to_draw, player_pos)
+    screen.blit(sprite_to_draw, player.position)
     draw_inventory()
 
     pygame.display.flip()
