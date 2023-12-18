@@ -21,10 +21,7 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 # Load image assets
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
-background_layer_1 = pygame.image.load('background_cafe3.png').convert_alpha()
-furniture_table = pygame.image.load('asset_table.png').convert_alpha()
-furniture_shelf = pygame.image.load('asset_shelf.png').convert_alpha()
-furniture_cat_food = pygame.image.load('asset_cat_food.png').convert_alpha()
+background_layer = pygame.image.load('background_cafe3.png').convert_alpha()
 item_images = {
     "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
     "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
@@ -40,20 +37,45 @@ def get_sprite(x, y):
     image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
     return image
 
-
-
-# Actor superclass
-class Actor:
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
+# Entity class
+class Entity:
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False):
         self.position = position
+        self.collision_rect_offset = collision_rect_offset
+        self.collision_rect_size = collision_rect_size
+        self.file_name = file_name
+        self.is_dynamic = is_dynamic
+        self.image = None
+        self.dynamic_sprite = None
+        self.collide_rect = None
+        self.update_collide_rect()
+        if not self.file_name == '':
+            self.load_image()
+    def update_collide_rect(self):
+        self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
+    def load_image(self):
+        self.image = pygame.image.load(self.file_name).convert_alpha()
+    def get_z_order(self):
+        # Assuming y-coordinate determines depth
+        return self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)
+    def set_dynamic_sprite(self, sprite):
+        if self.is_dynamic:
+            self.dynamic_sprite = sprite
+    def collision_center(self):
+        return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
+
+
+
+# Actor class
+class Actor(Entity):
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
+        super().__init__(position, collision_rect_offset, collision_rect_size)
         self.energy = energy
         self.speed = speed
         self.current_direction = 'down'
         self.pose_index = 0
         self.sprite = {}
         self.is_moving = False
-        self.collision_rect_offset = collision_rect_offset
-        self.collision_rect_size = collision_rect_size
 
     def move(self, angle, distance):
         # Set the actor to moving
@@ -76,22 +98,20 @@ class Actor:
         dx = distance * math.cos(radians)
         dy = -distance * math.sin(radians)  # Invert y-axis for Pygame
     
-        # Update position and collision
+        # Calculate new position to check for collission
         new_pos = [self.position[0] + dx, self.position[1] + dy]
 
         # Check for X-axis collision
-        #new_rect = pygame.Rect(new_pos[0], self.position[1], SPRITE_SIZE, SPRITE_SIZE)
         new_rect = self.real_rect(new_pos[0], self.position[1])
-        x_collision = any(new_rect.colliderect(obstacle) for obstacle in obstacles)
+        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
 
         # Update actor's position if no collision on X-axis
         if not x_collision:
             self.position[0] = new_pos[0]
 
         # Check for Y-axis collision
-        #new_rect = pygame.Rect(self.position[0], new_pos[1], SPRITE_SIZE, SPRITE_SIZE)
         new_rect = self.real_rect(self.position[0], new_pos[1])
-        y_collision = any(new_rect.colliderect(obstacle) for obstacle in obstacles)
+        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
 
         # Update player position if no collision on Y-axis
         if not y_collision:
@@ -110,12 +130,59 @@ class Actor:
             self.collision_rect_size[1]
         )
 
+# NPC class
+class NPC(Actor):
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
+        self.fullness = 50
+        self.bored = 50
+        self.motivation = 0
+        self.motivation_threshold = 75  # Define a threshold for motivation
+        self.direction = 0
+        self.task = ''
+        self.subtask = ''
+    def update(self):
+        # Get hungrier over time
+        self.fullness -= random.randint(0, 1)
+        
+        # Go eat if hungry
+        if self.fullness < 10:
+            self.task = 'eat'
+
+        # Increase motivation if there are no tasks
+        #if self.task == '':
+        self.motivation += random.randint(0, 1)  # Adjust the range as needed
+
+        # Check if motivation is above threshold
+        if self.motivation > self.motivation_threshold:
+            # Choose a random direction
+            self.direction = (self.direction + random.randint(-20,20)) % 360
+            
+            # Move the cat
+            self.move(self.direction, self.speed)
+
+            # Lose the motivation
+            self.motivation = 0
+        
+        if self.task == 'eat':
+            # Point towards the cat food
+            dx = item_cat_food.position[0] - self.collision_center()[0]
+            dy = item_cat_food.collision_center()[1] - self.collision_center()[1]
+            self.direction = math.degrees(math.atan2(-dy, dx)) % 360
+
+            #Lower the motivation threshold
+            self.motivation_threshold = 5
+
+
 
 # Player setup
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
+
+
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20))
+player.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
 player.sprite = {
     'idle_down': get_sprite(0, 0),
@@ -126,44 +193,11 @@ player.sprite = {
     'up': [get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1), get_sprite(4, 1), get_sprite(5, 1), get_sprite(6, 1)],
     'right': [get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2), get_sprite(4, 2), get_sprite(5, 2), get_sprite(6, 2)],
     'left': [get_sprite(1, 3), get_sprite(2, 3), get_sprite(3, 3), get_sprite(4, 3), get_sprite(5, 3), get_sprite(6, 3)],
-    
-    
 }
-
-# NPC class
-class NPC(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
-        self.fullness = 50
-        self.bored = 50
-        self.motivation = 0
-        self.motivation_threshold = 50  # Define a threshold for motivation
-        self.move_chance = 1.0  # 50% chance to move when motivated
-        self.direction = 0
-        self.task = ''
-        self.subtask = ''
-    def update(self):
-        # Randomly increase motivation
-        #self.motivation += random.randint(0, 10)  # Adjust the range as needed
-
-        # Check if motivation is above threshold
-        if self.motivation > self.motivation_threshold:
-            # Decide whether to move
-            if random.random() < self.move_chance:
-                self.direction = (self.direction + random.randint(-20,20)) % 360
-                self.move(self.direction, self.speed)
-                self.motivation = 0
-        
-        # Move towards the cat food
-        dx = cat_food_pos[0] - self.position[0]
-        dy = cat_food_pos[1] - self.position[1]
-        angle = math.degrees(math.atan2(-dy, dx)) % 360
-
-        # Move towards the cat food
-        #self.move(angle, self.speed)
 
 # Cat setup
 cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115), collision_rect_size=(30,10))
+cat.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
 cat.sprite = {
     'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
@@ -176,53 +210,30 @@ cat.sprite = {
     'idle_up': get_sprite(3, 4)
 }
 
-# Obstacle setup
-obstacles = []
-table_pos = [570, 715]
-shelf_pos = [65, 760]
-cat_food_pos = [875,330]
-table_obstacle = pygame.Rect(table_pos[0] + 7, table_pos[1] + 50, 157, 120)
-shelf_obstacle = pygame.Rect(shelf_pos[0] + 7, shelf_pos[1] + 110, 157, 40)
-cat_food_obstacle = pygame.Rect(cat_food_pos[0] + 8, cat_food_pos[1] + 8, 40, 20)
-obstacles.append(table_obstacle)
-obstacles.append(shelf_obstacle)
-obstacles.append(cat_food_obstacle)
+item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
+item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
+item_cat_food = Entity([875,330], [8,8], [40,20], 'asset_cat_food.png')
 
-#Populate the game objects
-class GameObject:
-    def __init__(self, image, position, is_dynamic=False):
-        self.image = image
-        self.position = position
-        self.is_dynamic = is_dynamic
-        self.dynamic_sprite = None
-    def get_z_order(self):
-        # Assuming y-coordinate determines depth
-        return self.position[1]
-    def set_dynamic_sprite(self, sprite):
-        if self.is_dynamic:
-            self.dynamic_sprite = sprite
-game_objects = [
-    GameObject(background_layer_1, (0, 0)),
-    GameObject(furniture_table, (table_pos[0], table_pos[1])),
-    GameObject(furniture_shelf, (shelf_pos[0], shelf_pos[1])),
-    GameObject(furniture_cat_food, (cat_food_pos[0], cat_food_pos[1])),
-]
-player_game_object = GameObject(None, player.position, is_dynamic=True)
-game_objects.append(player_game_object)
-cat_game_object = GameObject(None, cat.position, is_dynamic=True)
-game_objects.append(cat_game_object)
+items = []
+items.append(item_table)
+items.append(item_shelf)
+items.append(item_cat_food)
+items.append(player)
+items.append(cat)
+
+
 
 # Inventory setup
 active_slot_index = 0
 inventory = []
 def add_to_inventory(item):
-    """Adds an item to the inventory if there's space."""
+    # Adds an item to the inventory if there's space.
     if len(inventory) < MAX_INVENTORY_SIZE:
         inventory.append(item)
         return True
     return False
 def remove_from_inventory(item):
-    """Removes an item from the inventory."""
+    # Removes an item from the inventory.
     if item in inventory:
         inventory.remove(item)
         return True
@@ -320,12 +331,10 @@ while running:
     # Update player game object sprite and position
     if player.is_moving:
         player.pose_index = (player.pose_index + 1) % 17
-        #print(player.pose_index, round(player.pose_index/3))
         sprite_to_draw = player.sprite[player.current_direction][round(player.pose_index / 3)]
     else:
         sprite_to_draw = player.sprite[f'idle_{player.current_direction}']
-    player_game_object.set_dynamic_sprite(sprite_to_draw)
-    player_game_object.position = player.position
+    player.set_dynamic_sprite(sprite_to_draw)
 
     # Update NPC states
     cat.update()
@@ -336,25 +345,29 @@ while running:
         sprite_to_draw = cat.sprite[cat.current_direction][cat.pose_index]
     else:
         sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
-    cat_game_object.set_dynamic_sprite(sprite_to_draw)
+    cat.set_dynamic_sprite(sprite_to_draw)
 
     # Calculate camera offset based on player position
     camera_offset = calculate_camera_offset(player.position)
+    
+    # Draw the background
+    screen.blit(background_layer, (0,0))
 
-    # Sort objects by their z-order
-    game_objects.sort(key=lambda obj: obj.get_z_order())
-
-    # Render the objects in sorted order
-    for obj in game_objects:
+    # Draw the rest of the items
+    items.sort(key=lambda obj: obj.get_z_order())
+    for obj in items:
         image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
         if image_to_blit:
             screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
 
-
+    # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
     screen.blit(text, (10, SCREEN_HEIGHT - 30))
+    
+    # Draw the inventory GUI
     draw_inventory_gui()
 
+    # Flip
     pygame.display.flip()
 
     # Cap the frame rate
