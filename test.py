@@ -216,7 +216,7 @@ player.sprite = {
 }
 
 # Cat setup
-cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115), collision_rect_size=(30,10), sprite_size=64)
+cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
 cat.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
 cat.sprite = {
@@ -376,8 +376,8 @@ while running:
 
     # Update cat game object sprite and position
     if cat.is_moving:
-        cat.pose_index = (cat.pose_index + 1) % 3
-        sprite_to_draw = cat.sprite[cat.current_direction][cat.pose_index]
+        cat.pose_index = (cat.pose_index + 1) % 8
+        sprite_to_draw = cat.sprite[cat.current_direction][round(cat.pose_index / 3)]
     else:
         sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
     cat.set_dynamic_sprite(sprite_to_draw)
