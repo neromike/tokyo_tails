@@ -82,6 +82,7 @@ class Actor(Entity):
         self.pose_index = 0
         self.sprite = {}
         self.is_moving = False
+        self.bubble = None
 
     def move(self, angle, distance):
         # Set the actor to moving
@@ -145,6 +146,9 @@ class Actor(Entity):
             self.collision_rect_size[0],
             self.collision_rect_size[1]
         )
+
+    def bubble_check(self):
+        passa
 
 # NPC class
 class NPC(Actor):
@@ -216,14 +220,14 @@ cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115)
 cat.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
 cat.sprite = {
-    'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0)],
-    'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1)],
-    'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2)],
-    'up': [get_sprite(0, 3), get_sprite(1, 3), get_sprite(2, 3), get_sprite(3, 3)],
-    'idle_down': get_sprite(0, 4),
-    'idle_left': get_sprite(1, 4),
-    'idle_right': get_sprite(2, 4),
-    'idle_up': get_sprite(3, 4)
+    'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0)],
+    'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1)],
+    'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2)],
+    'up': [get_sprite(0, 3), get_sprite(1, 3), get_sprite(2, 3)],
+    'idle_down': get_sprite(0, 0),
+    'idle_left': get_sprite(0, 1),
+    'idle_right': get_sprite(0, 2),
+    'idle_up': get_sprite(0, 3)
 }
 
 # Item setup
@@ -372,7 +376,7 @@ while running:
 
     # Update cat game object sprite and position
     if cat.is_moving:
-        cat.pose_index = (cat.pose_index + 1) % 4
+        cat.pose_index = (cat.pose_index + 1) % 3
         sprite_to_draw = cat.sprite[cat.current_direction][cat.pose_index]
     else:
         sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
