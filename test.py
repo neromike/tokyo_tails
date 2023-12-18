@@ -10,7 +10,10 @@ pygame.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
 MILLISECONDS_PER_HOUR = MILLISECONDS_PER_DAY / 24
-START_TIME = pygame.time.get_ticks()
+START_HOUR = 8  # Start time (hour)
+START_MINUTE = 0  # Start time (minute)
+INITIAL_TIME_OFFSET = (START_HOUR * 60 + START_MINUTE) * (MILLISECONDS_PER_HOUR / 60)
+START_TIME = pygame.time.get_ticks() + INITIAL_TIME_OFFSET
 FONT_SIZE = 20
 
 
@@ -202,7 +205,6 @@ class NPC(Actor):
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
-
 
 
 # Player setup
@@ -419,7 +421,13 @@ while running:
     screen.blit(text, (10, SCREEN_HEIGHT - 30))
 
     # Draw the in-game timme
-    time_string = f"Day {current_day}, {in_game_hour:02}:{in_game_minute:02}"
+    am_pm = "AM" if in_game_hour < 12 else "PM"
+    in_game_hour = in_game_hour % 12
+    if in_game_hour == 0:
+        in_game_hour = 12  # Adjust for midnight and noon
+
+    # Create time string with AM/PM
+    time_string = f"Day {current_day}, {in_game_hour:02}:{in_game_minute:02} {am_pm}"
     time_surface = font.render(time_string, True, (255, 255, 255))
     screen.blit(time_surface, (10, 10))
 
