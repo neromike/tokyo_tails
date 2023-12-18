@@ -238,12 +238,14 @@ cat.sprite = {
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
 item_cat_food = Entity([875,330], [8,8], [40,20], 'asset_cat_food.png')
+item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all objects, includig the player and NPCs
 items = []
 items.append(item_table)
 items.append(item_shelf)
 items.append(item_cat_food)
+items.append(item_bed)
 items.append(player)
 items.append(cat)
 
