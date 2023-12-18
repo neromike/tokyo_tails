@@ -17,7 +17,6 @@ pygame.display.set_caption("Tokyo Tails")
 font = pygame.font.Font(None, FONT_SIZE)
 
 # Load image assets
-BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
 background_layer = pygame.image.load('background_cafe3.png').convert_alpha()
 item_images = {
     "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
@@ -35,6 +34,13 @@ def get_sprite(x, y):
     return image
 
 
+# Setup the room
+BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
+room_obstacles = []
+room_obstacles.append( pygame.Rect(0, 0, 3000, 330) )         # top
+room_obstacles.append( pygame.Rect(0, 0, 80, 1080) )          # left
+room_obstacles.append( pygame.Rect(0, 1000, 3000, 1080) )     # bottom
+room_obstacles.append( pygame.Rect(2940, 0, 3000, 1080) )     # right
 
 # Entity class
 class Entity:
@@ -101,6 +107,8 @@ class Actor(Entity):
         # Check for X-axis collision
         new_rect = self.real_rect(new_pos[0], self.position[1])
         x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+        if not x_collision:
+            x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
 
         # Update actor's position if no collision on X-axis
         if not x_collision:
@@ -109,7 +117,9 @@ class Actor(Entity):
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
         y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
-
+        if not y_collision:
+            y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+        
         # Update player position if no collision on Y-axis
         if not y_collision:
             self.position[1] = new_pos[1]
