@@ -159,6 +159,7 @@ class Actor(Entity):
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
+        self.happiness = 50
         self.fullness = 50
         self.bored = 50
         self.motivation = 0
