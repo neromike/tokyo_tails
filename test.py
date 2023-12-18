@@ -116,6 +116,7 @@ class Actor(Entity):
         # Update actor's position if no collision on X-axis
         if not x_collision:
             self.position[0] = new_pos[0]
+            self.update_collide_rect()
 
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
@@ -130,6 +131,7 @@ class Actor(Entity):
         # Update player position if no collision on Y-axis
         if not y_collision:
             self.position[1] = new_pos[1]
+            self.update_collide_rect()
         
         # Actor doesn't move if collision on both x and y
         if x_collision and y_collision:
