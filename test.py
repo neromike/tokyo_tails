@@ -8,7 +8,6 @@ pygame.init()
 
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
-SPRITE_SIZE = 128
 FONT_SIZE = 20
 
 # Set up the screen
@@ -25,13 +24,7 @@ item_images = {
     "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha()
 }
 
-# Function to get sprite
-def get_sprite(x, y):
-    """Extracts and returns a single sprite from the sprite sheet."""
-    image = pygame.Surface((SPRITE_SIZE, SPRITE_SIZE))
-    image.blit(sprite_sheet, (0, 0), (x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE))
-    image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
-    return image
+
 
 
 # Setup the room
@@ -47,13 +40,14 @@ room_exits.append( pygame.Rect(330, 0, 450, 310))
 
 # Entity class
 class Entity:
-    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False):
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None):
         self.position = position
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
         self.file_name = file_name
         self.is_dynamic = is_dynamic
         self.image = None
+        self.sprite_size = sprite_size
         self.dynamic_sprite = None
         self.collide_rect = None
         self.update_collide_rect()
@@ -71,11 +65,17 @@ class Entity:
             self.dynamic_sprite = sprite
     def collision_center(self):
         return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
+    def get_sprite(self, x, y):
+        # Extracts and returns a single sprite from the sprite sheet.
+        image = pygame.Surface((self.sprite_size, self.sprite_size))
+        image.blit(sprite_sheet, (0, 0), (x * self.sprite_size, y * self.sprite_size, self.sprite_size, self.sprite_size))
+        image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
+        return image
 
 # Actor class
 class Actor(Entity):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
-        super().__init__(position, collision_rect_offset, collision_rect_size)
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
+        super().__init__(position, collision_rect_offset, collision_rect_size, sprite_size=sprite_size)
         self.energy = energy
         self.speed = speed
         self.current_direction = 'down'
@@ -152,8 +152,8 @@ class Actor(Entity):
 
 # NPC class
 class NPC(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
         self.fullness = 50
         self.bored = 50
         self.motivation = 0
@@ -195,39 +195,39 @@ class NPC(Actor):
 
 # Player class
 class Player(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
+    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
 
 
 
 # Player setup
-player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20))
+player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), sprite_size=128)
 player.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
 player.sprite = {
-    'idle_down': get_sprite(0, 0),
-    'idle_up': get_sprite(0, 1),
-    'idle_right': get_sprite(0, 2),
-    'idle_left': get_sprite(0, 3),
-    'down': [get_sprite(1, 0), get_sprite(2, 0), get_sprite(3, 0), get_sprite(4, 0), get_sprite(5, 0), get_sprite(6, 0)],
-    'up': [get_sprite(1, 1), get_sprite(2, 1), get_sprite(3, 1), get_sprite(4, 1), get_sprite(5, 1), get_sprite(6, 1)],
-    'right': [get_sprite(1, 2), get_sprite(2, 2), get_sprite(3, 2), get_sprite(4, 2), get_sprite(5, 2), get_sprite(6, 2)],
-    'left': [get_sprite(1, 3), get_sprite(2, 3), get_sprite(3, 3), get_sprite(4, 3), get_sprite(5, 3), get_sprite(6, 3)],
+    'idle_down': player.get_sprite(0, 0),
+    'idle_up': player.get_sprite(0, 1),
+    'idle_right': player.get_sprite(0, 2),
+    'idle_left': player.get_sprite(0, 3),
+    'down': [player.get_sprite(1, 0), player.get_sprite(2, 0), player.get_sprite(3, 0), player.get_sprite(4, 0), player.get_sprite(5, 0), player.get_sprite(6, 0)],
+    'up': [player.get_sprite(1, 1), player.get_sprite(2, 1), player.get_sprite(3, 1), player.get_sprite(4, 1), player.get_sprite(5, 1), player.get_sprite(6, 1)],
+    'right': [player.get_sprite(1, 2), player.get_sprite(2, 2), player.get_sprite(3, 2), player.get_sprite(4, 2), player.get_sprite(5, 2), player.get_sprite(6, 2)],
+    'left': [player.get_sprite(1, 3), player.get_sprite(2, 3), player.get_sprite(3, 3), player.get_sprite(4, 3), player.get_sprite(5, 3), player.get_sprite(6, 3)],
 }
 
 # Cat setup
-cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115), collision_rect_size=(30,10))
+cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(0,115), collision_rect_size=(30,10), sprite_size=64)
 cat.is_dynamic = True
-sprite_sheet = pygame.image.load('sprite_cat_128.png')  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
 cat.sprite = {
-    'down': [get_sprite(0, 0), get_sprite(1, 0), get_sprite(2, 0)],
-    'left': [get_sprite(0, 1), get_sprite(1, 1), get_sprite(2, 1)],
-    'right': [get_sprite(0, 2), get_sprite(1, 2), get_sprite(2, 2)],
-    'up': [get_sprite(0, 3), get_sprite(1, 3), get_sprite(2, 3)],
-    'idle_down': get_sprite(0, 0),
-    'idle_left': get_sprite(0, 1),
-    'idle_right': get_sprite(0, 2),
-    'idle_up': get_sprite(0, 3)
+    'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
+    'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
+    'right': [cat.get_sprite(0, 2), cat.get_sprite(1, 2), cat.get_sprite(2, 2)],
+    'up': [cat.get_sprite(0, 3), cat.get_sprite(1, 3), cat.get_sprite(2, 3)],
+    'idle_down': cat.get_sprite(0, 0),
+    'idle_left': cat.get_sprite(0, 1),
+    'idle_right': cat.get_sprite(0, 2),
+    'idle_up': cat.get_sprite(0, 3)
 }
 
 # Item setup
@@ -331,8 +331,8 @@ while running:
             adjusted_mouse_y = mouse_y + camera_offset[1]
 
             # Check if the player is near the cat
-            player_rect = pygame.Rect(player.position[0], player.position[1], SPRITE_SIZE, SPRITE_SIZE)
-            cat_rect = pygame.Rect(cat.position[0], cat.position[1], SPRITE_SIZE, SPRITE_SIZE)
+            player_rect = pygame.Rect(player.position[0], player.position[1], player.sprite_size, player.sprite_size)
+            cat_rect = pygame.Rect(cat.position[0], cat.position[1], cat.sprite_size, cat.sprite_size)
 
             if player_rect.colliderect(cat_rect.inflate(20, 20)):  # Inflate the cat's rect for a proximity check
                 # Check if the mouse click is on the cat
