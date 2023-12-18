@@ -34,6 +34,8 @@ def get_sprite(x, y):
     image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
     return image
 
+
+
 # Entity class
 class Entity:
     def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False):
@@ -60,8 +62,6 @@ class Entity:
             self.dynamic_sprite = sprite
     def collision_center(self):
         return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
-
-
 
 # Actor class
 class Actor(Entity):
@@ -170,14 +170,14 @@ class NPC(Actor):
             #Lower the motivation threshold
             self.motivation_threshold = 5
 
-
-
-# Player setup
+# Player class
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=()):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size)
 
 
+
+# Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20))
 player.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
@@ -207,10 +207,12 @@ cat.sprite = {
     'idle_up': get_sprite(3, 4)
 }
 
+# Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
 item_cat_food = Entity([875,330], [8,8], [40,20], 'asset_cat_food.png')
 
+# Master list of all objects, includig the player and NPCs
 items = []
 items.append(item_table)
 items.append(item_shelf)
