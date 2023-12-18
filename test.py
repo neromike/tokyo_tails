@@ -10,9 +10,6 @@ pygame.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 SPRITE_SIZE = 128
 FONT_SIZE = 20
-INV_SIZE = 60            # Size of inventory items in pixels
-INV_NUM = 12             # Number of inventory slots shown
-MAX_INVENTORY_SIZE = 36  # Maximum number of items in the inventory
 
 # Set up the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -224,6 +221,12 @@ items.append(cat)
 
 
 # Inventory setup
+INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
+INV_NUM = 12             # Number of inventory slots shown
+MAX_INVENTORY_SIZE = 36  # Maximum number of items in the inventory
+INV_PADDING = 10
+INV_BASE_X = (SCREEN_WIDTH / 2) - (((INV_DISPLAY_SIZE + INV_PADDING) * INV_NUM) / 2)
+INV_BASE_Y = 10
 active_slot_index = 0
 inventory = []
 def add_to_inventory(item):
@@ -239,27 +242,25 @@ def remove_from_inventory(item):
         return True
     return False
 def draw_inventory_gui():
-    base_x, base_y = (SCREEN_WIDTH / 2) - ((INV_SIZE * INV_NUM) / 2), 10
-    padding = 10
-    border_width = 3
-    grey_color = (128, 128, 128)
-    black_color = (0, 0, 0)
-    bar_color = (255, 165, 0)
+    border_width = 5
+    inactive_color = (128, 128, 128)
+    active_color = (0, 0, 0)
+    bar_color = (255, 255, 255)
+    empty_slot_color = (200, 200, 200)
 
-    bar_width = (INV_SIZE * INV_NUM) + (padding * (INV_NUM - 1))
-    bar_height = INV_SIZE + 20
-    pygame.draw.rect(screen, bar_color, (base_x - 10, base_y - 10, bar_width + 20, bar_height))
-    empty_slot_color = (255, 0, 0)
+    bar_width = (INV_DISPLAY_SIZE * INV_NUM) + (INV_PADDING * (INV_NUM - 1))
+    bar_height = INV_DISPLAY_SIZE + 20
+    pygame.draw.rect(screen, bar_color, (INV_BASE_X - 10, INV_BASE_Y - 10, bar_width + 20, bar_height))
 
     for i in range(INV_NUM):
-        item_x = base_x + (i * (INV_SIZE + padding))
-        item_y = base_y
+        item_x = INV_BASE_X + (i * (INV_DISPLAY_SIZE + INV_PADDING))
+        item_y = INV_BASE_Y
 
         # Determine border color (black for active slot, grey for others)
-        border_color = black_color if i == active_slot_index else grey_color
+        border_color = active_color if i == active_slot_index else inactive_color
 
         # Draw border for the slot
-        pygame.draw.rect(screen, border_color, (item_x - border_width, item_y - border_width, INV_SIZE + (border_width * 2), INV_SIZE + (border_width * 2)))
+        pygame.draw.rect(screen, border_color, (item_x - border_width, item_y - border_width, INV_DISPLAY_SIZE + (border_width * 2), INV_DISPLAY_SIZE + (border_width * 2)))
 
         if i < len(inventory):
             # Draw item image
@@ -267,19 +268,23 @@ def draw_inventory_gui():
             screen.blit(item_image, (item_x, item_y))
         else:
             # Draw empty slot
-            pygame.draw.rect(screen, empty_slot_color, (item_x, item_y, INV_SIZE, INV_SIZE))
+            pygame.draw.rect(screen, empty_slot_color, (item_x, item_y, INV_DISPLAY_SIZE, INV_DISPLAY_SIZE))
+def check_inventory_click(mouse_x, mouse_y):
+    for i in range(INV_NUM):
+        item_x = INV_BASE_X + (i * (INV_DISPLAY_SIZE + INV_PADDING))
+        item_y = INV_BASE_Y
 
+        item_rect = pygame.Rect(item_x, item_y, INV_DISPLAY_SIZE, INV_DISPLAY_SIZE)
 
+        if item_rect.collidepoint(mouse_x, mouse_y):
+            return i  # Return the index of the clicked inventory slot
+    return None
 add_to_inventory("schmuppy")
 add_to_inventory("queso")
 add_to_inventory("black cat")
 add_to_inventory("orange cat")
 
-# Function to calculate camera offset
-def calculate_camera_offset(player_position):
-    x_offset = max(0, min(player_position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH))
-    y_offset = max(0, min(player_position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))
-    return x_offset, y_offset
+
 
 # Game loop
 running = True
@@ -290,6 +295,11 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Get the mouse position
             mouse_x, mouse_y = pygame.mouse.get_pos()
+
+            # Check if an inventory item was clicked
+            clicked_slot = check_inventory_click(mouse_x, mouse_y)
+            if clicked_slot is not None:
+                active_slot_index = clicked_slot
 
             # Adjust mouse position based on camera offset
             adjusted_mouse_x = mouse_x + camera_offset[0]
@@ -348,10 +358,10 @@ while running:
     cat.set_dynamic_sprite(sprite_to_draw)
 
     # Calculate camera offset based on player position
-    camera_offset = calculate_camera_offset(player.position)
+    camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
     
     # Draw the background
-    screen.blit(background_layer, (0,0))
+    screen.blit(background_layer, (0 - camera_offset[0], 0 - camera_offset[1]))
 
     # Draw the rest of the items
     items.sort(key=lambda obj: obj.get_z_order())
