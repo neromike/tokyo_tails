@@ -8,7 +8,12 @@ pygame.init()
 
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
+MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
+MILLISECONDS_PER_HOUR = MILLISECONDS_PER_DAY / 24
+START_TIME = pygame.time.get_ticks()
 FONT_SIZE = 20
+
+
 
 # Set up the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -160,7 +165,6 @@ class NPC(Actor):
         self.motivation_threshold = 75  # Define a threshold for motivation
         self.direction = 0
         self.task = ''
-        self.subtask = ''
     def update(self):
         # Get hungrier over time
         self.fullness -= random.randint(0, 1)
@@ -313,7 +317,19 @@ add_to_inventory("orange cat")
 
 # Game loop
 running = True
+current_day = None
+current_time = None
 while running:
+
+    # Calculate elapsed time
+    elapsed_time = pygame.time.get_ticks() - START_TIME
+    current_day = (elapsed_time // MILLISECONDS_PER_DAY) + 1
+    current_time = elapsed_time % MILLISECONDS_PER_DAY
+
+    # Convert current time to hours and minutes for display
+    in_game_hour = int(current_time // MILLISECONDS_PER_HOUR)
+    in_game_minute = int((current_time % MILLISECONDS_PER_HOUR) / (MILLISECONDS_PER_HOUR / 60))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -398,7 +414,12 @@ while running:
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
     screen.blit(text, (10, SCREEN_HEIGHT - 30))
-    
+
+    # Draw the in-game timme
+    time_string = f"Day {current_day}, {in_game_hour:02}:{in_game_minute:02}"
+    time_surface = font.render(time_string, True, (255, 255, 255))
+    screen.blit(time_surface, (10, 10))
+
     # Draw the inventory GUI
     draw_inventory_gui()
 
