@@ -37,10 +37,13 @@ def get_sprite(x, y):
 # Setup the room
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
 room_obstacles = []
-room_obstacles.append( pygame.Rect(0, 0, 3000, 330) )         # top
+room_obstacles.append( pygame.Rect(0, 0, 370, 330) )          # top-left
+room_obstacles.append( pygame.Rect(450, 0, 3000, 330) )       # top-right
 room_obstacles.append( pygame.Rect(0, 0, 80, 1080) )          # left
 room_obstacles.append( pygame.Rect(0, 1000, 3000, 1080) )     # bottom
 room_obstacles.append( pygame.Rect(2940, 0, 3000, 1080) )     # right
+room_exits = []
+room_exits.append( pygame.Rect(330, 0, 450, 310))
 
 # Entity class
 class Entity:
@@ -119,6 +122,10 @@ class Actor(Entity):
         y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
         if not y_collision:
             y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+        if not y_collision:
+            y_collision = any(new_rect.colliderect(item) for item in room_exits)
+            if y_collision:
+                print("You left the room")
         
         # Update player position if no collision on Y-axis
         if not y_collision:
