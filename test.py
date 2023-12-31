@@ -63,6 +63,9 @@ class Entity:
             self.load_image()
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
+    def check_collision(self, other_rect):
+        #Checks if this entity's collide_rect intersects with the given Rect.
+        return self.collide_rect.colliderect(other_rect)
     def load_image(self):
         self.image = pygame.image.load(self.file_name).convert_alpha()
     def get_z_order(self):
@@ -156,7 +159,7 @@ class Actor(Entity):
         )
 
     def bubble_check(self):
-        passa
+        pass
 
 # NPC class
 class NPC(Actor):
@@ -354,8 +357,8 @@ while running:
             # Check if the player is near the cat
             player_rect = pygame.Rect(player.position[0], player.position[1], player.sprite_size, player.sprite_size)
             cat_rect = pygame.Rect(cat.position[0], cat.position[1], cat.sprite_size, cat.sprite_size)
-
-            if player_rect.colliderect(cat_rect.inflate(20, 20)):  # Inflate the cat's rect for a proximity check
+            if player.check_collision(cat_rect):
+            #if player_rect.colliderect(cat_rect.inflate(20, 20)):  # Inflate the cat's rect for a proximity check
                 # Check if the mouse click is on the cat
                 if cat_rect.collidepoint(adjusted_mouse_x, adjusted_mouse_y):
                     # Implement interaction logic here
