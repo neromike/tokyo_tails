@@ -46,7 +46,9 @@ room_obstacles.append( pygame.Rect(2940, 0, 3000, 1080) )     # right
 room_exits = []
 room_exits.append( pygame.Rect(330, 0, 450, 310))
 
-# Entity class
+
+
+# ENTITY class
 class Entity:
     def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None):
         self.position = position
@@ -83,7 +85,9 @@ class Entity:
         image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
         return image
 
-# Actor class
+
+
+# ACTOR class
 class Actor(Entity):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
         super().__init__(position, collision_rect_offset, collision_rect_size, sprite_size=sprite_size)
@@ -93,7 +97,12 @@ class Actor(Entity):
         self.pose_index = 0
         self.sprite = {}
         self.is_moving = False
-        self.bubble = None
+        self.bubble_surface = None
+        self.bubble_text = None
+        self.bubble_image = None
+        self.bubble_visible = False
+        self.bubble_display_time = 2000  # in milliseconds
+        self.bubble_start_time = None
 
     def move(self, angle, distance):
         # Set the actor to moving
@@ -158,8 +167,42 @@ class Actor(Entity):
             self.collision_rect_size[1]
         )
 
-    def bubble_check(self):
-        pass
+    def show_bubble(self, text=None, image=None):
+        # Shows a speech bubble above the actor with either text or an image.
+        self.bubble_text = text
+        self.bubble_image = image
+        self.bubble_visible = True
+
+        # Create the bubble surface
+        bubble_width, bubble_height = 100, 50  # adjust size as needed
+        self.bubble_surface = pygame.Surface((bubble_width, bubble_height), pygame.SRCALPHA)
+        self.bubble_surface.fill((255, 255, 255))  # white bubble
+
+        # Draw text or image onto the bubble surface
+        if self.bubble_text:
+            font = pygame.font.Font(None, 20)  # adjust font size as needed
+            text_surface = font.render(self.bubble_text, True, (0, 0, 0))  # black text
+            # Center the text inside the bubble
+            text_rect = text_surface.get_rect(center=(bubble_width // 2, bubble_height // 2))
+            self.bubble_surface.blit(text_surface, text_rect)
+        elif self.bubble_image:
+            # Scale or transform the image if necessary
+            image_rect = self.bubble_image.get_rect(center=(bubble_width // 2, bubble_height // 2))
+            self.bubble_surface.blit(self.bubble_image, image_rect)
+        
+        # Record the time when the bubble is shown
+        self.bubble_start_time = pygame.time.get_ticks()  
+
+    def update_bubble(self):
+        # Updates the speech bubble. Hides it if the display time has passed.
+        if self.bubble_visible and self.bubble_start_time:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.bubble_start_time > self.bubble_display_time:
+                self.hide_bubble()
+
+    def hide_bubble(self):
+        # Hides the speech bubble.
+        self.bubble_visible = False
 
 # NPC class
 class NPC(Actor):
@@ -363,6 +406,7 @@ while running:
                 if cat_rect.collidepoint(adjusted_mouse_x, adjusted_mouse_y):
                     # Implement interaction logic here
                     print("Player clicked on the cat!")
+                    player.show_bubble(text="Kitty!")
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
@@ -395,6 +439,9 @@ while running:
         sprite_to_draw = player.sprite[f'idle_{player.current_direction}']
     player.set_dynamic_sprite(sprite_to_draw)
 
+    # Update the player bubble
+    player.update_bubble()
+
     # Update NPC states
     cat.update()
 
@@ -418,6 +465,12 @@ while running:
         image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
         if image_to_blit:
             screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
+
+    # Draw the player bubble
+    if player.bubble_visible and player.bubble_surface:
+        # Adjust bubble_position as needed to position it above the actor
+        bubble_position = (player.position[0], player.position[1] - 60)
+        screen.blit(player.bubble_surface, bubble_position)
 
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
