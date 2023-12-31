@@ -29,7 +29,10 @@ item_images = {
     "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
     "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
     "black cat": pygame.image.load('asset_item_black_cat.png').convert_alpha(),
-    "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha()
+    "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha(),
+}
+bubble = {
+    "heart": pygame.image.load('asset_bubble_heart.png').convert_alpha(),
 }
 
 
@@ -173,10 +176,20 @@ class Actor(Entity):
         self.bubble_image = image
         self.bubble_visible = True
 
-        # Create the bubble surface
+       # Create the bubble surface with transparency
         bubble_width, bubble_height = 100, 50  # adjust size as needed
         self.bubble_surface = pygame.Surface((bubble_width, bubble_height), pygame.SRCALPHA)
-        self.bubble_surface.fill((255, 255, 255))  # white bubble
+
+        # Draw a rounded rectangle for the bubble
+        rect = pygame.Rect(0, 0, bubble_width, bubble_height)
+        roundness = 15  # adjust for desired curvature
+        pygame.draw.rect(self.bubble_surface, (255, 255, 255), rect, border_radius=roundness)
+
+        # Optionally, add a tail to the bubble
+        tail_height = 10
+        tail_width = 20
+        tail_points = [(bubble_width // 2, bubble_height), (bubble_width // 2 - tail_width // 2, bubble_height - tail_height), (bubble_width // 2 + tail_width // 2, bubble_height - tail_height)]
+        pygame.draw.polygon(self.bubble_surface, (255, 255, 255), tail_points)
 
         # Draw text or image onto the bubble surface
         if self.bubble_text:
@@ -247,7 +260,7 @@ class NPC(Actor):
             #Lower the motivation threshold
             self.motivation_threshold = 5
 
-# Player class
+# PLAYER class
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
@@ -268,7 +281,7 @@ player.sprite = {
     'left': [player.get_sprite(1, 3), player.get_sprite(2, 3), player.get_sprite(3, 3), player.get_sprite(4, 3), player.get_sprite(5, 3), player.get_sprite(6, 3)],
 }
 
-# Cat setup
+# cat setup
 cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
 cat.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
@@ -406,7 +419,8 @@ while running:
                 if cat_rect.collidepoint(adjusted_mouse_x, adjusted_mouse_y):
                     # Implement interaction logic here
                     print("Player clicked on the cat!")
-                    player.show_bubble(text="Kitty!")
+                    #player.show_bubble(text="Kitty!")
+                    player.show_bubble(image=bubble['heart'])
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
