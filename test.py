@@ -20,7 +20,7 @@ FONT_SIZE = 20
 
 
 # Grid
-GRID_CELL_SIZE = 40  # Size of each grid cell in pixels
+GRID_CELL_SIZE = 50  # Size of each grid cell in pixels
 GRID_WIDTH = SCREEN_WIDTH // GRID_CELL_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_CELL_SIZE
 def initialize_grid():
@@ -32,30 +32,34 @@ def mark_obstacles_on_grid():
 
     # Now mark the impassable cells
     for obstacle in room_obstacles + items:
-        # Calculate the range of grid cells this obstacle occupies
-        if hasattr(obstacle, 'collide_rect'):
-            obstacle = obstacle.collide_rect
         
-        # Adjust the position of the obstacle based on the camera offset
-        adjusted_obstacle_rect = pygame.Rect(
-            obstacle.left - camera_offset[0],
-            obstacle.top - camera_offset[1],
-            obstacle.width,
-            obstacle.height
-        )
+        # Skip the obstacles created by NPCs and the player
+        if obstacle.__class__.__name__ != 'NPC' and obstacle.__class__.__name__ != 'Player':
+        
+            # Calculate the range of grid cells this obstacle occupies
+            if hasattr(obstacle, 'collide_rect'):
+                obstacle = obstacle.collide_rect
+            
+            # Adjust the position of the obstacle based on the camera offset
+            adjusted_obstacle_rect = pygame.Rect(
+                obstacle.left - camera_offset[0],
+                obstacle.top - camera_offset[1],
+                obstacle.width,
+                obstacle.height
+            )
 
-        top_left_cell = (adjusted_obstacle_rect.left // GRID_CELL_SIZE, adjusted_obstacle_rect.top // GRID_CELL_SIZE)
-        bottom_right_cell = (adjusted_obstacle_rect.right // GRID_CELL_SIZE, adjusted_obstacle_rect.bottom // GRID_CELL_SIZE)
+            top_left_cell = (adjusted_obstacle_rect.left // GRID_CELL_SIZE, adjusted_obstacle_rect.top // GRID_CELL_SIZE)
+            bottom_right_cell = (adjusted_obstacle_rect.right // GRID_CELL_SIZE, adjusted_obstacle_rect.bottom // GRID_CELL_SIZE)
 
-        for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
-            for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
-                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
-                    grid[y][x] = True  # Mark cell as impassable
+            for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
+                for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
+                    if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
+                        grid[y][x] = True  # Mark cell as impassable
     return grid
 def draw_grid(passable_color=(0, 255, 0), impassable_color=(255, 0, 0)):
     for y, row in enumerate(grid):
         for x, cell in enumerate(row):
-            color = passable_color if cell else impassable_color
+            color = impassable_color if cell else passable_color
             rect = pygame.Rect(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1, GRID_CELL_SIZE - 2, GRID_CELL_SIZE - 2)
             pygame.draw.rect(screen, color, rect, 1)  # Change '1' to '0' if you want filled rectangles
 def grid_to_pixel(cell_x, cell_y):
@@ -63,9 +67,30 @@ def grid_to_pixel(cell_x, cell_y):
     return cell_x * GRID_CELL_SIZE, cell_y * GRID_CELL_SIZE
 def pixel_to_grid(position):
     # Converts pixel coordinates to grid cell coordinates.
-    return position[0] // GRID_CELL_SIZE, position[1] // GRID_CELL_SIZE
+    return int(position[0] // GRID_CELL_SIZE), int(position[1] // GRID_CELL_SIZE)
 grid = initialize_grid()
+def print_grid(start=None, end=None, marked_positions=None):
+    # Print column labels
+    print(' ', end=' ')
+    for x in range(len(grid[0])):
+        print(f'{x:2d}', end=' ')
+    print()
 
+    for y, row in enumerate(grid):
+        # Print row label
+        print(f'{y:2d}', end=' ')
+
+        row_string = ''
+        for x, cell in enumerate(row):
+            if start and (x, y) == start:
+                row_string += 'S  '  # Start
+            elif end and (x, y) == end:
+                row_string += 'E  '  # End
+            elif marked_positions and (x, y) in [node.position for node in marked_positions]:
+                row_string += 'o  ' # Marked
+            else:
+                row_string += 'X  ' if cell else '.  '  # Obstacle or Empty
+        print(row_string)
 
 
 class Node():
@@ -78,7 +103,8 @@ class Node():
         self.f = 0
     def __eq__(self, other):
         return self.position == other.position
-def astar(maze, start, end):
+def astar(start, end):
+    #print_grid(start, end)
     # Returns a list of tuples as a path from the given start to the given end in the given maze
 
     # Create start and end node
@@ -96,6 +122,7 @@ def astar(maze, start, end):
 
     # Loop until you find the end
     while len(open_list) > 0:
+        #print(len(open_list), len(closed_list))
 
         # Get the current node
         current_node = open_list[0]
@@ -121,21 +148,27 @@ def astar(maze, start, end):
         # Generate children
         children = []
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]: # Adjacent squares
-
+        #for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # Adjacent squares
+            
             # Get node position
             node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
             # Make sure within range
-            if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (len(maze[len(maze)-1]) -1) or node_position[1] < 0:
+            if node_position[0] > (len(grid)-1) or node_position[0] < 0 or node_position[1] > (len(grid[len(grid)-1])-1) or node_position[1] < 0:
                 continue
 
-            # Make sure walkable terrain
-            if maze[node_position[0]][node_position[1]] != 0:
+            # Make sure walkable terrain, ignore any obstacles at our current position and the end position
+            if grid[node_position[1]][node_position[0]] and node_position != end and node_position != current_node.position:
                 continue
+            
+            # Make sure we don't cut corners
+            if new_position == (-1, -1) or new_position == (-1, 1) or new_position == (1, -1) or new_position == (1, 1):
+                if grid[current_node.position[1] + new_position[1]][current_node.position[0]] or grid[current_node.position[1]][current_node.position[0] + new_position[0]]:
+                    continue
 
             # Create new node
             new_node = Node(current_node, node_position)
-
+            
             # Append
             children.append(new_node)
 
@@ -143,23 +176,22 @@ def astar(maze, start, end):
         for child in children:
 
             # Child is on the closed list
-            for closed_child in closed_list:
-                if child == closed_child:
-                    continue
-
+            if child in closed_list:
+                continue
+            
             # Create the f, g, and h values
             child.g = current_node.g + 1
             child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
             child.f = child.g + child.h
 
             # Child is already in the open list
-            for open_node in open_list:
-                if child == open_node and child.g > open_node.g:
+            if child in open_list:
+                index = open_list.index(child)
+                if child.h > open_list[index].g:
                     continue
-
+            
             # Add the child to the open list
             open_list.append(child)
-
 
 
 
@@ -191,8 +223,13 @@ room_obstacles.append( pygame.Rect(450, 0, 3000, 330) )       # top-right
 room_obstacles.append( pygame.Rect(0, 0, 80, 1080) )          # left
 room_obstacles.append( pygame.Rect(0, 1000, 3000, 1080) )     # bottom
 room_obstacles.append( pygame.Rect(2940, 0, 3000, 1080) )     # right
+
+room_obstacles.append( pygame.Rect(400, 400, 500, 30) )       # U obstacle
+room_obstacles.append( pygame.Rect(870, 450, 30, 200) )       # U obstacle
+room_obstacles.append( pygame.Rect(400, 650, 500, 30) )       # U obstacle
+
 room_exits = []
-room_exits.append( pygame.Rect(330, 0, 450, 310))
+room_exits.append( pygame.Rect(330, 0, 450, 310) )
 
 
 
@@ -281,12 +318,11 @@ class Actor(Entity):
         x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
         if not x_collision:
             x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-
-        # Update actor's position if no collision on X-axis
         if not x_collision:
-            self.position[0] = new_pos[0]
-            self.update_collide_rect()
-
+            x_collision = any(new_rect.colliderect(item) for item in room_exits)
+            if x_collision:
+                print("You left the room")
+        
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
         y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
@@ -297,11 +333,100 @@ class Actor(Entity):
             if y_collision:
                 print("You left the room")
         
+        # Update actor's position if no collision on X-axis
+        if not x_collision:
+            self.position[0] = new_pos[0]
+            self.update_collide_rect()
+
         # Update player position if no collision on Y-axis
         if not y_collision:
             self.position[1] = new_pos[1]
             self.update_collide_rect()
+
+        if not x_collision and y_collision:
+            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not x_collision:
+                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not x_collision:
+                new_pos[0] -= GRID_CELL_SIZE / 8
+                self.position[0] = new_pos[0]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not x_collision:
+                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not x_collision:
+                new_pos[0] += GRID_CELL_SIZE / 8
+                self.position[0] = new_pos[0]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not x_collision:
+                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not x_collision:
+                new_pos[0] -= GRID_CELL_SIZE / 8
+                self.position[0] = new_pos[0]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not x_collision:
+                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not x_collision:
+                new_pos[0] += GRID_CELL_SIZE / 8
+                self.position[0] = new_pos[0]
+                self.update_collide_rect()
         
+        if x_collision and not y_collision:
+            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not y_collision:
+                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not y_collision:
+                new_pos[1] -= 5
+                self.position[1] = new_pos[1]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not y_collision:
+                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not y_collision:
+                new_pos[1] += 5
+                self.position[1] = new_pos[1]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not y_collision:
+                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not y_collision:
+                new_pos[1] -= 5
+                self.position[1] = new_pos[1]
+                self.update_collide_rect()
+            
+            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            if not y_collision:
+                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+            if not y_collision:
+                new_pos[1] += 5
+                self.position[1] = new_pos[1]
+                self.update_collide_rect()
+        
+        # Update actor's position if no collision on X-axis
+        if not x_collision:
+            self.position[0] = new_pos[0]
+            self.update_collide_rect()
+
+        # Update player position if no collision on Y-axis
+        if not y_collision:
+            self.position[1] = new_pos[1]
+            self.update_collide_rect()
+
         # Actor doesn't move if collision on both x and y
         if x_collision and y_collision:
             self.is_moving = False
@@ -372,7 +497,7 @@ class NPC(Actor):
         self.motivation = 0
         self.motivation_threshold = 75  # Define a threshold for motivation
         self.direction = 0
-        self.task = ''
+        self.task = 'eat'
         self.destination = []
     def update(self):
         """
@@ -405,13 +530,46 @@ class NPC(Actor):
 
             #Figure out next step
         """
-        # Get grid start and end positions
-        cat_position = pixel_to_grid(self.position)
-        food_position = pixel_to_grid(item_cat_food.position)
-        path = astar(grid, cat_position, food_position)
-        #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]})')
-        #print(grid)
-        print(path)
+        if self.task == 'eat':
+            # Get start and end positions
+            cat_position = pixel_to_grid(self.collision_center())
+            food_position = pixel_to_grid(item_cat_food.position)
+
+            # Figure out next step
+            next_step = astar(cat_position, food_position)
+            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) next_step:{next_step}')
+            if next_step == None:
+                self.task = ''
+            else:
+                if len(next_step) > 1:
+                    next_step = next_step[1]
+                else:
+                    next_step = cat_position
+                    self.task = ''
+            
+                # Move the cat if it's not next to the correct position
+                if next_step != cat_position:
+                    if next_step[0] < cat_position[0]:
+                        if next_step[1] < cat_position[1]:
+                            self.move(135, self.speed)
+                        elif next_step[1] == cat_position[1]:
+                            self.move(180, self.speed)
+                        else:
+                            self.move(225, self.speed)
+                    elif next_step[0] == cat_position[0]:
+                        if next_step[1] < cat_position[1]:
+                            self.move(90, self.speed)
+                        elif next_step[1] > cat_position[1]:
+                            self.move(270, self.speed)
+                    else:
+                        if next_step[1] < cat_position[1]:
+                            self.move(45, self.speed)
+                        elif next_step[1] == cat_position[1]:
+                            self.move(0, self.speed)
+                        else:
+                            self.move(315, self.speed)
+
+            
 
     
     
@@ -454,7 +612,7 @@ cat.sprite = {
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
-item_cat_food = Entity([875,330], [8,8], [40,20], 'asset_cat_food.png')
+item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all objects, includig the player and NPCs
@@ -465,7 +623,6 @@ items.append(item_cat_food)
 items.append(item_bed)
 items.append(player)
 items.append(cat)
-
 
 
 # Inventory setup
@@ -538,6 +695,8 @@ add_to_inventory("orange cat")
 running = True
 current_day = None
 current_time = None
+camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
+grid = mark_obstacles_on_grid()
 while running:
 
     # Calculate elapsed time
@@ -651,7 +810,7 @@ while running:
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
     screen.blit(text, (10, SCREEN_HEIGHT - 30))
 
-    # Draw the in-game timme
+    # Draw the in-game time
     am_pm = "AM" if in_game_hour < 12 else "PM"
     in_game_hour = in_game_hour % 12
     if in_game_hour == 0:
