@@ -2,6 +2,7 @@ import pygame
 import sys
 import math
 import random
+import heapq
 
 # Initialize Pygame
 pygame.init()
@@ -15,6 +16,58 @@ START_MINUTE = 0  # Start time (minute)
 INITIAL_TIME_OFFSET = (START_HOUR * 60 + START_MINUTE) * (MILLISECONDS_PER_HOUR / 60)
 START_TIME = pygame.time.get_ticks() + INITIAL_TIME_OFFSET
 FONT_SIZE = 20
+
+
+
+# Grid
+GRID_CELL_SIZE = 40  # Size of each grid cell in pixels
+GRID_WIDTH = SCREEN_WIDTH // GRID_CELL_SIZE
+GRID_HEIGHT = SCREEN_HEIGHT // GRID_CELL_SIZE
+def initialize_grid():
+    # Create a 2D array with all cells set to passable (True)
+    return [[True for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+def mark_obstacles_on_grid():
+    # Reset the grid
+    grid = initialize_grid()
+
+    # Now mark the impassable cells
+    for obstacle in room_obstacles + items:
+        # Calculate the range of grid cells this obstacle occupies
+        if hasattr(obstacle, 'collide_rect'):
+            obstacle = obstacle.collide_rect
+        
+        # Adjust the position of the obstacle based on the camera offset
+        adjusted_obstacle_rect = pygame.Rect(
+            obstacle.left - camera_offset[0],
+            obstacle.top - camera_offset[1],
+            obstacle.width,
+            obstacle.height
+        )
+
+        top_left_cell = (adjusted_obstacle_rect.left // GRID_CELL_SIZE, adjusted_obstacle_rect.top // GRID_CELL_SIZE)
+        bottom_right_cell = (adjusted_obstacle_rect.right // GRID_CELL_SIZE, adjusted_obstacle_rect.bottom // GRID_CELL_SIZE)
+
+        for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
+            for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
+                if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
+                    grid[y][x] = False  # Mark cell as impassable
+    return grid
+def draw_grid(passable_color=(0, 255, 0), impassable_color=(255, 0, 0)):
+    for y, row in enumerate(grid):
+        for x, cell in enumerate(row):
+            color = passable_color if cell else impassable_color
+            rect = pygame.Rect(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1, GRID_CELL_SIZE - 2, GRID_CELL_SIZE - 2)
+            pygame.draw.rect(screen, color, rect, 1)  # Change '1' to '0' if you want filled rectangles
+def grid_to_pixel(cell_x, cell_y):
+    # Converts grid cell coordinates to pixel coordinates.
+    return cell_x * GRID_CELL_SIZE, cell_y * GRID_CELL_SIZE
+def pixel_to_grid(position):
+    # Converts pixel coordinates to grid cell coordinates.
+    return position[0] // GRID_CELL_SIZE, position[1] // GRID_CELL_SIZE
+grid = initialize_grid()
+
+
+
 
 
 
@@ -128,7 +181,7 @@ class Actor(Entity):
         dx = distance * math.cos(radians)
         dy = -distance * math.sin(radians)  # Invert y-axis for Pygame
     
-        # Calculate new position to check for collission
+        # Calculate new position to check for collision
         new_pos = [self.position[0] + dx, self.position[1] + dy]
 
         # Check for X-axis collision
@@ -216,7 +269,7 @@ class Actor(Entity):
     def hide_bubble(self):
         # Hides the speech bubble.
         self.bubble_visible = False
-
+    
 # NPC class
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
@@ -228,7 +281,9 @@ class NPC(Actor):
         self.motivation_threshold = 75  # Define a threshold for motivation
         self.direction = 0
         self.task = ''
+        self.destination = []
     def update(self):
+        """
         # Get hungrier over time
         self.fullness -= random.randint(0, 1)
         
@@ -237,7 +292,7 @@ class NPC(Actor):
             self.task = 'eat'
 
         # Increase motivation if there are no tasks
-        #if self.task == '':
+        # if self.task == '':
         self.motivation += random.randint(0, 1)  # Adjust the range as needed
 
         # Check if motivation is above threshold
@@ -252,14 +307,19 @@ class NPC(Actor):
             self.motivation = 0
         
         if self.task == 'eat':
-            # Point towards the cat food
-            dx = item_cat_food.position[0] - self.collision_center()[0]
-            dy = item_cat_food.collision_center()[1] - self.collision_center()[1]
-            self.direction = math.degrees(math.atan2(-dy, dx)) % 360
+            # Get grid start and end positions
+            cat_position = pixel_to_grid(self.position)
+            food_position = pixel_to_grid(item_cat_food.position)
 
-            #Lower the motivation threshold
-            self.motivation_threshold = 5
+            #Figure out next step
+        """
+        # Get grid start and end positions
+        cat_position = pixel_to_grid(self.position)
+        food_position = pixel_to_grid(item_cat_food.position)
+        print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]})')
 
+    
+    
 # PLAYER class
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
@@ -469,7 +529,10 @@ while running:
 
     # Calculate camera offset based on player position
     camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
-    
+
+    # Update the collision grid
+    grid = mark_obstacles_on_grid()
+
     # Draw the background
     screen.blit(background_layer, (0 - camera_offset[0], 0 - camera_offset[1]))
 
@@ -485,6 +548,9 @@ while running:
         # Adjust bubble_position as needed to position it above the actor
         bubble_position = (player.position[0], player.position[1] - 60)
         screen.blit(player.bubble_surface, bubble_position)
+
+    # Draw the grid
+    draw_grid()
 
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
