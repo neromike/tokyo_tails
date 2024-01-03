@@ -803,7 +803,7 @@ while running:
     # Draw the player bubble
     if player.bubble_visible and player.bubble_surface:
         # Adjust bubble_position as needed to position it above the actor
-        bubble_position = (player.position[0], player.position[1] - 60)
+        bubble_position = (player.position[0] - camera_offset[0], player.position[1] - 60 - camera_offset[1])
         screen.blit(player.bubble_surface, bubble_position)
 
     # Draw the grid
