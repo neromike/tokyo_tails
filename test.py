@@ -610,6 +610,7 @@ cat.sprite = {
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
 item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png')
+item_cat_food_bag = Entity([1200,700], [7,70], [60,16], 'asset_cat_food_bag.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all objects, includig the player and NPCs
@@ -617,6 +618,7 @@ items = []
 items.append(item_table)
 items.append(item_shelf)
 items.append(item_cat_food)
+items.append(item_cat_food_bag)
 items.append(item_bed)
 items.append(player)
 items.append(cat)
@@ -807,7 +809,7 @@ while running:
         screen.blit(player.bubble_surface, bubble_position)
 
     # Draw the grid
-    draw_grid()
+    #draw_grid()
 
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
