@@ -294,6 +294,7 @@ class Actor(Entity):
         self.bubble_visible = False
         self.bubble_display_time = 2000  # in milliseconds
         self.bubble_start_time = None
+        self.held_entity = None
 
     def move(self, angle, distance):
         # Set the actor to moving
@@ -492,7 +493,21 @@ class Actor(Entity):
     def hide_bubble(self):
         # Hides the speech bubble.
         self.bubble_visible = False
-    
+
+    def hold_entity(self, entity):
+        print("hold")
+        self.held_entity = entity
+
+    def update_held_position(self):
+        if self.held_entity != None:
+            self.held_entity.position[0] = self.position[0]
+            self.held_entity.position[1] = self.position[1]
+
+    def drop_entity(self):
+        print("drop")
+        self.held_entity.position = self.position
+        self.held_entity = None
+
 # NPC class
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
@@ -506,36 +521,6 @@ class NPC(Actor):
         self.task = 'eat'
         self.destination = []
     def update(self):
-        """
-        # Get hungrier over time
-        self.fullness -= random.randint(0, 1)
-        
-        # Go eat if hungry
-        if self.fullness < 10:
-            self.task = 'eat'
-
-        # Increase motivation if there are no tasks
-        # if self.task == '':
-        self.motivation += random.randint(0, 1)  # Adjust the range as needed
-
-        # Check if motivation is above threshold
-        if self.motivation > self.motivation_threshold:
-            # Choose a random direction
-            self.direction = (self.direction + random.randint(-20,20)) % 360
-            
-            # Move the cat
-            self.move(self.direction, self.speed)
-
-            # Lose the motivation
-            self.motivation = 0
-        
-        if self.task == 'eat':
-            # Get grid start and end positions
-            cat_position = pixel_to_grid(self.position)
-            food_position = pixel_to_grid(item_cat_food.position)
-
-            #Figure out next step
-        """
         if self.task == 'eat':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
@@ -734,10 +719,16 @@ while running:
             # Adjust mouse position based on camera offset
             adjusted_mouse_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
 
+            # Drop an item if it is being held
+            if player.held_entity != None:
+                player.drop_entity()
+
             # Check if the player is near the cat
             if check_interaction(player, item_cat_food):
+                player.hold_entity(item_cat_food)
+            if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
-                #player.show_bubble(image=bubble['heart'])
+                player.show_bubble(image=bubble['heart'])
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
@@ -783,6 +774,9 @@ while running:
     else:
         sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
     cat.set_dynamic_sprite(sprite_to_draw)
+
+    # Update held object positions
+    player.update_held_position()
 
     # Calculate camera offset based on player position
     camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
