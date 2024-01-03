@@ -106,7 +106,6 @@ class Node():
     def __eq__(self, other):
         return self.position == other.position
 def astar(start, end):
-    #print_grid(start, end)
     # Returns a list of tuples as a path from the given start to the given end in the given maze
 
     # Create start and end node
@@ -124,7 +123,6 @@ def astar(start, end):
 
     # Loop until you find the end
     while len(open_list) > 0:
-        #print(len(open_list), len(closed_list))
 
         # Get the current node
         current_node = open_list[0]
@@ -150,13 +148,12 @@ def astar(start, end):
         # Generate children
         children = []
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]: # Adjacent squares
-        #for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # Adjacent squares
             
             # Get node position
             node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
             # Make sure within range
-            if node_position[0] > (len(grid)-1) or node_position[0] < 0 or node_position[1] > (len(grid[len(grid)-1])-1) or node_position[1] < 0:
+            if node_position[1] > (len(grid)-1) or node_position[1] < 0 or node_position[0] > (len(grid[len(grid)-1])-1) or node_position[0] < 0:
                 continue
 
             # Make sure walkable terrain, ignore any obstacles at our current position and the end position
