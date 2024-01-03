@@ -505,7 +505,7 @@ class Actor(Entity):
 
     def drop_entity(self):
         self.held_entity.position[0] = self.position[0]
-        self.held_entity.position[1] = self.position[1]
+        self.held_entity.position[1] = self.position[1] + self.sprite_size
         self.held_entity.update_collide_rect()
         self.held_entity.held = False
         self.held_entity = None
