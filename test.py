@@ -530,15 +530,16 @@ class NPC(Actor):
 
             # Figure out next step
             next_step = astar(cat_position, food_position)
-            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) next_step:{next_step}')
+            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
             if next_step == None:
-                self.task = ''
+                #self.task = ''
+                pass
             else:
                 if len(next_step) > 1:
                     next_step = next_step[1]
                 else:
                     next_step = cat_position
-                    self.task = ''
+                    #self.task = ''
             
                 # Move the cat if it's not next to the correct position
                 if next_step != cat_position:
