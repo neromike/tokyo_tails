@@ -234,7 +234,7 @@ room_exits.append( pygame.Rect(330, 0, 450, 310) )
 
 # ENTITY class
 class Entity:
-    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None):
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False):
         self.position = position
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
@@ -247,6 +247,7 @@ class Entity:
         self.update_collide_rect()
         if not self.file_name == '':
             self.load_image()
+        self.holdable = holdable
         self.held = False
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
@@ -280,7 +281,7 @@ class Entity:
 # ACTOR class
 class Actor(Entity):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
-        super().__init__(position, collision_rect_offset, collision_rect_size, sprite_size=sprite_size)
+        super().__init__(position, collision_rect_offset, collision_rect_size, sprite_size=sprite_size, holdable=False)
         self.energy = energy
         self.speed = speed
         self.current_direction = 'down'
@@ -494,8 +495,9 @@ class Actor(Entity):
         self.bubble_visible = False
 
     def hold_entity(self, entity):
-        self.held_entity = entity
-        entity.held = True
+        if entity.holdable:
+            self.held_entity = entity
+            entity.held = True
 
     def update_held_position(self):
         if self.held_entity != None:
@@ -609,8 +611,8 @@ cat.sprite = {
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
-item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png')
-item_cat_food_bag = Entity([1200,700], [7,70], [60,16], 'asset_cat_food_bag.png')
+item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True)
+item_cat_food_bag = Entity([1200,700], [7,70], [60,16], 'asset_cat_food_bag.png', holdable=True)
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all objects, includig the player and NPCs
@@ -734,6 +736,8 @@ while running:
             # Check if the player is near the cat
             if check_interaction(player, item_cat_food):
                 player.hold_entity(item_cat_food)
+            if check_interaction(player, item_cat_food_bag):
+                player.hold_entity(item_cat_food_bag)
             if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
                 player.show_bubble(image=bubble['heart'])
