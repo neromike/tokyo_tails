@@ -21,11 +21,18 @@ FONT_SIZE = 20
 
 # Grid
 GRID_CELL_SIZE = 50  # Size of each grid cell in pixels
-GRID_WIDTH = SCREEN_WIDTH // GRID_CELL_SIZE
-GRID_HEIGHT = SCREEN_HEIGHT // GRID_CELL_SIZE
+grid_width = grid_height = 0
 def initialize_grid():
+    global grid_width, grid_height
+    # Get the dimensions of the background image
+    background_width, background_height = background_layer.get_size()
+
+    # Calculate the number of grid cells in each dimension
+    grid_width = background_width // GRID_CELL_SIZE
+    grid_height = background_height // GRID_CELL_SIZE
+
     # Create a 2D array with all cells set to passable (False)
-    return [[False for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+    return [[False for _ in range(grid_width)] for _ in range(grid_height)]
 def mark_obstacles_on_grid():
     # Reset the grid
     grid = initialize_grid()
@@ -39,28 +46,23 @@ def mark_obstacles_on_grid():
             # Calculate the range of grid cells this obstacle occupies
             if hasattr(obstacle, 'collide_rect'):
                 obstacle = obstacle.collide_rect
-            
-            # Adjust the position of the obstacle based on the camera offset
-            adjusted_obstacle_rect = pygame.Rect(
-                obstacle.left - camera_offset[0],
-                obstacle.top - camera_offset[1],
-                obstacle.width,
-                obstacle.height
-            )
 
-            top_left_cell = (adjusted_obstacle_rect.left // GRID_CELL_SIZE, adjusted_obstacle_rect.top // GRID_CELL_SIZE)
-            bottom_right_cell = (adjusted_obstacle_rect.right // GRID_CELL_SIZE, adjusted_obstacle_rect.bottom // GRID_CELL_SIZE)
+            top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
+            bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
 
             for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
                 for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
-                    if 0 <= x < GRID_WIDTH and 0 <= y < GRID_HEIGHT:
+                    if 0 <= x < grid_width and 0 <= y < grid_height:
                         grid[y][x] = True  # Mark cell as impassable
     return grid
 def draw_grid(passable_color=(0, 255, 0), impassable_color=(255, 0, 0)):
     for y, row in enumerate(grid):
         for x, cell in enumerate(row):
             color = impassable_color if cell else passable_color
-            rect = pygame.Rect(x * GRID_CELL_SIZE + 1, y * GRID_CELL_SIZE + 1, GRID_CELL_SIZE - 2, GRID_CELL_SIZE - 2)
+            rect = pygame.Rect((x * GRID_CELL_SIZE + 1) - camera_offset[0], 
+                               (y * GRID_CELL_SIZE + 1) - camera_offset[1], 
+                               GRID_CELL_SIZE - 2, 
+                               GRID_CELL_SIZE - 2)
             pygame.draw.rect(screen, color, rect, 1)  # Change '1' to '0' if you want filled rectangles
 def grid_to_pixel(cell_x, cell_y):
     # Converts grid cell coordinates to pixel coordinates.
@@ -68,7 +70,6 @@ def grid_to_pixel(cell_x, cell_y):
 def pixel_to_grid(position):
     # Converts pixel coordinates to grid cell coordinates.
     return int(position[0] // GRID_CELL_SIZE), int(position[1] // GRID_CELL_SIZE)
-grid = initialize_grid()
 def print_grid(start=None, end=None, marked_positions=None):
     # Print column labels
     print(' ', end=' ')
@@ -696,6 +697,7 @@ running = True
 current_day = None
 current_time = None
 camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
+grid = initialize_grid()
 grid = mark_obstacles_on_grid()
 while running:
 
