@@ -47,13 +47,14 @@ def mark_obstacles_on_grid():
             if hasattr(obstacle, 'collide_rect'):
                 obstacle = obstacle.collide_rect
 
-            top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
-            bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
+            if obstacle != None:
+                top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
+                bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
 
-            for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
-                for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
-                    if 0 <= x < grid_width and 0 <= y < grid_height:
-                        grid[y][x] = True  # Mark cell as impassable
+                for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
+                    for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
+                        if 0 <= x < grid_width and 0 <= y < grid_height:
+                            grid[y][x] = True  # Mark cell as impassable
     return grid
 def draw_grid(passable_color=(0, 255, 0), impassable_color=(255, 0, 0)):
     for y, row in enumerate(grid):
@@ -322,7 +323,7 @@ class Actor(Entity):
 
         # Check for X-axis collision
         new_rect = self.real_rect(new_pos[0], self.position[1])
-        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
         if not x_collision:
             x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
         if not x_collision:
@@ -332,7 +333,7 @@ class Actor(Entity):
         
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
-        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
         if not y_collision:
             y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
         if not y_collision:
@@ -352,7 +353,7 @@ class Actor(Entity):
 
         if not x_collision and y_collision:
             new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not x_collision:
                 x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not x_collision:
@@ -361,7 +362,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not x_collision:
                 x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not x_collision:
@@ -370,7 +371,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not x_collision:
                 x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not x_collision:
@@ -379,7 +380,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not x_collision:
                 x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not x_collision:
@@ -389,7 +390,7 @@ class Actor(Entity):
         
         if x_collision and not y_collision:
             new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not y_collision:
                 y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not y_collision:
@@ -398,7 +399,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not y_collision:
                 y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not y_collision:
@@ -407,7 +408,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not y_collision:
                 y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not y_collision:
@@ -416,7 +417,7 @@ class Actor(Entity):
                 self.update_collide_rect()
             
             new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self)
+            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
             if not y_collision:
                 y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
             if not y_collision:
@@ -501,10 +502,12 @@ class Actor(Entity):
         if self.held_entity != None:
             self.held_entity.position[0] = self.position[0]
             self.held_entity.position[1] = self.position[1]
+            self.held_entity.collide_rect = None
 
     def drop_entity(self):
         self.held_entity.position[0] = self.position[0]
         self.held_entity.position[1] = self.position[1]
+        self.held_entity.update_collide_rect()
         self.held_entity = None
 
 # NPC class
