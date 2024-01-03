@@ -499,8 +499,8 @@ class Actor(Entity):
 
     def update_held_position(self):
         if self.held_entity != None:
-            self.held_entity.position[0] = self.position[0]
-            self.held_entity.position[1] = self.position[1]
+            self.held_entity.position[0] = self.position[0] + (self.sprite_size // 2) - (self.held_entity.image.get_width() // 2)
+            self.held_entity.position[1] = self.position[1] - self.held_entity.collision_rect_size[1]
             self.held_entity.collide_rect = None
 
     def drop_entity(self):
