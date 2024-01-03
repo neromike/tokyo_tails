@@ -495,7 +495,6 @@ class Actor(Entity):
         self.bubble_visible = False
 
     def hold_entity(self, entity):
-        print("hold")
         self.held_entity = entity
 
     def update_held_position(self):
@@ -504,8 +503,8 @@ class Actor(Entity):
             self.held_entity.position[1] = self.position[1]
 
     def drop_entity(self):
-        print("drop")
-        self.held_entity.position = self.position
+        self.held_entity.position[0] = self.position[0]
+        self.held_entity.position[1] = self.position[1]
         self.held_entity = None
 
 # NPC class
