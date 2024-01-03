@@ -247,6 +247,7 @@ class Entity:
         self.update_collide_rect()
         if not self.file_name == '':
             self.load_image()
+        self.held = False
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
     def check_collision(self, object2, proximity=20, update_first=True):
@@ -494,6 +495,7 @@ class Actor(Entity):
 
     def hold_entity(self, entity):
         self.held_entity = entity
+        entity.held = True
 
     def update_held_position(self):
         if self.held_entity != None:
@@ -505,6 +507,7 @@ class Actor(Entity):
         self.held_entity.position[0] = self.position[0]
         self.held_entity.position[1] = self.position[1]
         self.held_entity.update_collide_rect()
+        self.held_entity.held = False
         self.held_entity = None
 
 # NPC class
@@ -523,7 +526,10 @@ class NPC(Actor):
         if self.task == 'eat':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
-            food_position = pixel_to_grid(item_cat_food.position)
+            if item_cat_food.held:
+                food_position = pixel_to_grid(player.collision_center())
+            else:
+                food_position = pixel_to_grid(item_cat_food.collision_center())
 
             # Figure out next step
             next_step = astar(cat_position, food_position)
