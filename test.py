@@ -251,9 +251,14 @@ class Entity:
             self.load_image()
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
-    def check_collision(self, other_rect):
-        #Checks if this entity's collide_rect intersects with the given Rect.
-        return self.collide_rect.colliderect(other_rect)
+    def check_collision(self, object2, proximity=20, update_first=True):
+        # first update the collide_rects
+        if update_first:
+            self.update_collide_rect()
+            object2.update_collide_rect()
+
+        # checks if this entity's collide_rect intersects with the second object's collide_rect
+        return self.collide_rect.colliderect(object2.collide_rect.inflate(proximity, proximity))
     def load_image(self):
         self.image = pygame.image.load(self.file_name).convert_alpha()
     def get_z_order(self):
@@ -690,7 +695,11 @@ add_to_inventory("queso")
 add_to_inventory("black cat")
 add_to_inventory("orange cat")
 
-
+def check_interaction(object1, object2):
+    if object1.check_collision(object2):
+        if object1.collide_rect.collidepoint(adjusted_mouse_pos) or object2.collide_rect.collidepoint(adjusted_mouse_pos):
+            return True
+    return False
 
 # Game loop
 running = True
@@ -715,28 +724,20 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Get the mouse position
-            mouse_x, mouse_y = pygame.mouse.get_pos()
+            mouse_pos = pygame.mouse.get_pos()
 
             # Check if an inventory item was clicked
-            clicked_slot = check_inventory_click(mouse_x, mouse_y)
+            clicked_slot = check_inventory_click(mouse_pos[0], mouse_pos[1])
             if clicked_slot is not None:
                 active_slot_index = clicked_slot
 
             # Adjust mouse position based on camera offset
-            adjusted_mouse_x = mouse_x + camera_offset[0]
-            adjusted_mouse_y = mouse_y + camera_offset[1]
+            adjusted_mouse_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
 
             # Check if the player is near the cat
-            player_rect = pygame.Rect(player.position[0], player.position[1], player.sprite_size, player.sprite_size)
-            cat_rect = pygame.Rect(cat.position[0], cat.position[1], cat.sprite_size, cat.sprite_size)
-            if player.check_collision(cat_rect):
-            #if player_rect.colliderect(cat_rect.inflate(20, 20)):  # Inflate the cat's rect for a proximity check
-                # Check if the mouse click is on the cat
-                if cat_rect.collidepoint(adjusted_mouse_x, adjusted_mouse_y):
-                    # Implement interaction logic here
-                    print("Player clicked on the cat!")
-                    #player.show_bubble(text="Kitty!")
-                    player.show_bubble(image=bubble['heart'])
+            if check_interaction(player, item_cat_food):
+                #player.show_bubble(text="Kitty!")
+                #player.show_bubble(image=bubble['heart'])
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
