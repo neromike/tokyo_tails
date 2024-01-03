@@ -261,6 +261,7 @@ class Entity:
         return self.collide_rect.colliderect(object2.collide_rect.inflate(proximity, proximity))
     def load_image(self):
         self.image = pygame.image.load(self.file_name).convert_alpha()
+        self.sprite_size = self.image.get_width()
     def get_z_order(self):
         # Assuming y-coordinate determines depth
         return self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)
@@ -506,8 +507,8 @@ class Actor(Entity):
             self.held_entity.collide_rect = None
 
     def drop_entity(self):
-        self.held_entity.position[0] = self.position[0]
-        self.held_entity.position[1] = self.position[1] + self.sprite_size
+        self.held_entity.position[0] = self.position[0] + self.collision_rect_offset[0] - self.held_entity.collision_rect_size[0] - 5
+        self.held_entity.position[1] = self.position[1] + self.collision_rect_offset[1] + self.collision_rect_size[1] - self.held_entity.collision_rect_size[1] - self.held_entity.collision_rect_offset[1]
         self.held_entity.update_collide_rect()
         self.held_entity.held = False
         self.held_entity = None
@@ -594,7 +595,7 @@ player.sprite = {
 }
 
 # cat setup
-cat = NPC(position=[550, 470], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
+cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
 cat.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
 cat.sprite = {
@@ -612,7 +613,7 @@ cat.sprite = {
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
 item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True)
-item_cat_food_bag = Entity([1200,700], [7,70], [60,16], 'asset_cat_food_bag.png', holdable=True)
+item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True)
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all objects, includig the player and NPCs
