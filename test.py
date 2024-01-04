@@ -6,7 +6,7 @@ import math
 pygame.init()
 
 # Constants
-SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
+SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
 MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
 MILLISECONDS_PER_HOUR = MILLISECONDS_PER_DAY / 24
 START_HOUR = 8  # Start time (hour)
@@ -322,122 +322,38 @@ class Actor(Entity):
 
         # Check for X-axis collision
         new_rect = self.real_rect(new_pos[0], self.position[1])
-        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-        if not x_collision:
-            x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)\
+            or (any(new_rect.colliderect(item) for item in room_obstacles))
+
         if not x_collision:
             x_collision = any(new_rect.colliderect(item) for item in room_exits)
             if x_collision:
                 print("You left the room")
-        
+
+        if not x_collision:
+            self.position[0] = new_pos[0]
+            self.update_collide_rect()
+
+
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
-        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-        if not y_collision:
-            y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
+        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)\
+            or any(new_rect.colliderect(item) for item in room_obstacles)
+
         if not y_collision:
             y_collision = any(new_rect.colliderect(item) for item in room_exits)
             if y_collision:
                 print("You left the room")
-        
-        # Update actor's position if no collision on X-axis
-        if not x_collision:
-            self.position[0] = new_pos[0]
-            self.update_collide_rect()
-
         # Update player position if no collision on Y-axis
         if not y_collision:
             self.position[1] = new_pos[1]
             self.update_collide_rect()
 
-        if not x_collision and y_collision:
-            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not x_collision:
-                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not x_collision:
-                new_pos[0] -= GRID_CELL_SIZE / 8
-                self.position[0] = new_pos[0]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not x_collision:
-                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not x_collision:
-                new_pos[0] += GRID_CELL_SIZE / 8
-                self.position[0] = new_pos[0]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not x_collision:
-                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not x_collision:
-                new_pos[0] -= GRID_CELL_SIZE / 8
-                self.position[0] = new_pos[0]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not x_collision:
-                x_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not x_collision:
-                new_pos[0] += GRID_CELL_SIZE / 8
-                self.position[0] = new_pos[0]
-                self.update_collide_rect()
-        
-        if x_collision and not y_collision:
-            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not y_collision:
-                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not y_collision:
-                new_pos[1] -= 5
-                self.position[1] = new_pos[1]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] + (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not y_collision:
-                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not y_collision:
-                new_pos[1] += 5
-                self.position[1] = new_pos[1]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] - (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not y_collision:
-                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not y_collision:
-                new_pos[1] -= 5
-                self.position[1] = new_pos[1]
-                self.update_collide_rect()
-            
-            new_rect = self.real_rect(self.position[0] - (GRID_CELL_SIZE / 4), self.position[1] + (GRID_CELL_SIZE / 4))
-            y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)
-            if not y_collision:
-                y_collision = any(new_rect.colliderect(item) for item in room_obstacles)
-            if not y_collision:
-                new_pos[1] += 5
-                self.position[1] = new_pos[1]
-                self.update_collide_rect()
-        
-        # Update actor's position if no collision on X-axis
-        if not x_collision:
-            self.position[0] = new_pos[0]
-            self.update_collide_rect()
-
-        # Update player position if no collision on Y-axis
-        if not y_collision:
-            self.position[1] = new_pos[1]
-            self.update_collide_rect()
 
         # Actor doesn't move if collision on both x and y
         if x_collision and y_collision:
             self.is_moving = False
-
+            
     def real_rect(self, x, y):
         # Return the actual rect size for the sprite
         return pygame.Rect(
