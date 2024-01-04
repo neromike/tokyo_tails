@@ -334,7 +334,6 @@ class Actor(Entity):
             self.position[0] = new_pos[0]
             self.update_collide_rect()
 
-
         # Check for Y-axis collision
         new_rect = self.real_rect(self.position[0], new_pos[1])
         y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)\
@@ -349,11 +348,56 @@ class Actor(Entity):
             self.position[1] = new_pos[1]
             self.update_collide_rect()
 
-
         # Actor doesn't move if collision on both x and y
         if x_collision and y_collision:
             self.is_moving = False
-            
+
+        # Check for collision and nudge if necessary
+        collided_obstacle = self.check_collision_with_obstacles()
+        if collided_obstacle:
+            self.is_moving = False
+            self.nudge_towards_nearest_corner(collided_obstacle)
+    
+    def check_collision_with_obstacles(self):
+        # Check for collision with each obstacle
+        for obstacle in room_obstacles:
+            if self.real_rect(self.position[0], self.position[1]).colliderect(obstacle):
+                return obstacle
+        return None
+
+    def nudge_towards_nearest_corner(self, obstacle):
+        # Find nearest corner of the collided obstacle
+        nearest_corner = None
+        min_distance = float('inf')
+
+        for corner in [obstacle.topleft, obstacle.topright, obstacle.bottomleft, obstacle.bottomright]:
+            distance = self.distance_to_corner(corner)
+            if distance < min_distance:
+                min_distance = distance
+                nearest_corner = corner
+
+        # Nudge towards the nearest corner
+        if nearest_corner:
+            nudge_direction = self.calculate_nudge_direction(nearest_corner)
+            self.position[0] += nudge_direction[0]
+            self.position[1] += nudge_direction[1]
+            self.update_collide_rect()
+
+    def distance_to_corner(self, corner):
+        actor_center = self.collision_center()
+        return math.sqrt((actor_center[0] - corner[0]) ** 2 + (actor_center[1] - corner[1]) ** 2)
+
+    def calculate_nudge_direction(self, corner):
+        # Determine the direction vector towards the corner
+        actor_center = self.collision_center()
+        direction = (corner[0] - actor_center[0], corner[1] - actor_center[1])
+
+        # Normalize the direction vector
+        magnitude = math.sqrt(direction[0]**2 + direction[1]**2)
+        if magnitude == 0:
+            return (0, 0)
+        return (direction[0] / magnitude, direction[1] / magnitude)
+
     def real_rect(self, x, y):
         # Return the actual rect size for the sprite
         return pygame.Rect(
@@ -454,7 +498,7 @@ class NPC(Actor):
 
             # Figure out next step
             next_step = astar(cat_position, food_position)
-            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
+            print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
             if next_step == None:
                 #self.task = ''
                 pass
@@ -733,7 +777,7 @@ while running:
         screen.blit(player.bubble_surface, bubble_position)
 
     # Draw the grid
-    #draw_grid()
+    draw_grid()
 
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
