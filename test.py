@@ -316,55 +316,46 @@ class Actor(Entity):
         # Calculate x and y components
         dx = distance * math.cos(radians)
         dy = -distance * math.sin(radians)  # Invert y-axis for Pygame
-    
-        # Calculate new position to check for collision
-        new_pos = [self.position[0] + dx, self.position[1] + dy]
 
         # Check for X-axis collision
-        new_rect = self.real_rect(new_pos[0], self.position[1])
-        x_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)\
-            or (any(new_rect.colliderect(item) for item in room_obstacles))
-
-        if not x_collision:
-            x_collision = any(new_rect.colliderect(item) for item in room_exits)
-            if x_collision:
-                print("You left the room")
-
-        if not x_collision:
-            self.position[0] = new_pos[0]
+        x_collision = self.check_collision_with_obstacles(self.real_rect(self.position[0] + dx, self.position[1]))
+        if not x_collision[0]:
+            self.position[0] = self.position[0] + dx
             self.update_collide_rect()
 
         # Check for Y-axis collision
-        new_rect = self.real_rect(self.position[0], new_pos[1])
-        y_collision = any(new_rect.colliderect(item.collide_rect) for item in items if item is not self and item.collide_rect is not None)\
-            or any(new_rect.colliderect(item) for item in room_obstacles)
-
-        if not y_collision:
-            y_collision = any(new_rect.colliderect(item) for item in room_exits)
-            if y_collision:
-                print("You left the room")
-        # Update player position if no collision on Y-axis
-        if not y_collision:
-            self.position[1] = new_pos[1]
+        y_collision = self.check_collision_with_obstacles(self.real_rect(self.position[0], self.position[1] + dy))
+        if not y_collision[0]:
+            self.position[1] = self.position[1] + dy
             self.update_collide_rect()
 
         # Actor doesn't move if collision on both x and y
-        if x_collision and y_collision:
+        if x_collision[0] and y_collision[0]:
             self.is_moving = False
 
-        # Check for collision and nudge if necessary
+        """
+        # Check for collision with room objects (and not and nudge if necessary
         collided_obstacle = self.check_collision_with_obstacles()
         if collided_obstacle:
             self.is_moving = False
             self.nudge_towards_nearest_corner(collided_obstacle)
+        """
     
-    def check_collision_with_obstacles(self):
+    def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
-        for obstacle in room_obstacles:
-            if self.real_rect(self.position[0], self.position[1]).colliderect(obstacle):
-                return obstacle
-        return None
-
+        for item in items:
+            if item is not self and item.collide_rect is not None:
+                if new_rect.colliderect(item.collide_rect):
+                    return ('item', item)
+        for item in room_obstacles:
+            if new_rect.colliderect(item):
+                return ('room', item)
+        for item in room_exits:
+            if new_rect.colliderect(item):
+                return ('exit', item)
+        return (False, None)
+    
+    """
     def nudge_towards_nearest_corner(self, obstacle):
         # Find nearest corner of the collided obstacle
         nearest_corner = None
@@ -397,7 +388,8 @@ class Actor(Entity):
         if magnitude == 0:
             return (0, 0)
         return (direction[0] / magnitude, direction[1] / magnitude)
-
+    """
+    
     def real_rect(self, x, y):
         # Return the actual rect size for the sprite
         return pygame.Rect(
@@ -498,7 +490,7 @@ class NPC(Actor):
 
             # Figure out next step
             next_step = astar(cat_position, food_position)
-            print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
+            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
             if next_step == None:
                 #self.task = ''
                 pass
