@@ -354,7 +354,7 @@ class Actor(Entity):
         return (False, None)
 
     def nudge_towards_corner(self, item, axis):
-        # C
+        # Use the collide_rect if it exists, otherwise use the rect
         if hasattr(item, 'collide_rect'):
             item = item.collide_rect
         
@@ -366,7 +366,7 @@ class Actor(Entity):
             (item.right, item.bottom)  # Bottom-right
         ]
         nearest_corner = min(corners, key=lambda corner: self.distance_to_corner(corner))
-        nudge_amount = 5  # Adjust this value as needed
+        nudge_amount = 3  # Adjust this value as needed
 
         if axis == 'x':
             if nearest_corner[0] > self.position[0]:
@@ -587,6 +587,8 @@ inventory = []
 def add_to_inventory(item):
     # Adds an item to the inventory if there's space.
     if len(inventory) < MAX_INVENTORY_SIZE:
+        global active_slot_index
+        active_slot_index = len(inventory)
         inventory.append(item)
         return True
     return False
@@ -682,14 +684,16 @@ while running:
 
             # Drop an item if it is being held
             if player.held_entity != None:
+                if player.held_entity == item_cat_food_bag:
+                    remove_from_inventory('asset_cat_food_bag')
                 player.drop_entity()
 
             # Check if the player is near the cat
             if check_interaction(player, item_cat_food):
                 player.hold_entity(item_cat_food)
             if check_interaction(player, item_cat_food_bag):
-                player.hold_entity(item_cat_food_bag)
-                add_to_inventory("asset_cat_food_bag")
+                if add_to_inventory('asset_cat_food_bag'):
+                    player.hold_entity(item_cat_food_bag)
             if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
                 player.show_bubble(image=bubble['heart'])
