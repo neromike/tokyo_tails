@@ -2,7 +2,6 @@ import pygame
 import sys
 import math
 import random
-import heapq
 
 # Initialize Pygame
 pygame.init()
@@ -19,7 +18,7 @@ FONT_SIZE = 20
 
 
 
-# Grid
+# GRID
 GRID_CELL_SIZE = 50  # Size of each grid cell in pixels
 grid_width = grid_height = 0
 def initialize_grid():
@@ -206,6 +205,7 @@ item_images = {
     "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
     "black cat": pygame.image.load('asset_item_black_cat.png').convert_alpha(),
     "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha(),
+    "asset_cat_food_bag": pygame.image.load('asset_item_cat_food_bag.png').convert_alpha(),
 }
 bubble = {
     "heart": pygame.image.load('asset_bubble_heart.png').convert_alpha(),
@@ -499,6 +499,7 @@ class Actor(Entity):
         if entity.holdable:
             self.held_entity = entity
             entity.held = True
+            print(entity.file_name.replace('.png',''))
 
     def update_held_position(self):
         if self.held_entity != None:
@@ -691,6 +692,7 @@ add_to_inventory("queso")
 add_to_inventory("black cat")
 add_to_inventory("orange cat")
 
+
 def check_interaction(object1, object2):
     if object1.check_collision(object2):
         if object1.collide_rect.collidepoint(adjusted_mouse_pos) or object2.collide_rect.collidepoint(adjusted_mouse_pos):
@@ -739,6 +741,7 @@ while running:
                 player.hold_entity(item_cat_food)
             if check_interaction(player, item_cat_food_bag):
                 player.hold_entity(item_cat_food_bag)
+                add_to_inventory("asset_cat_food_bag")
             if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
                 player.show_bubble(image=bubble['heart'])
