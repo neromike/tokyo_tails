@@ -332,14 +332,6 @@ class Actor(Entity):
         # Actor doesn't move if collision on both x and y
         if x_collision[0] and y_collision[0]:
             self.is_moving = False
-
-        """
-        # Check for collision with room objects (and not and nudge if necessary
-        collided_obstacle = self.check_collision_with_obstacles()
-        if collided_obstacle:
-            self.is_moving = False
-            self.nudge_towards_nearest_corner(collided_obstacle)
-        """
     
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
@@ -354,42 +346,7 @@ class Actor(Entity):
             if new_rect.colliderect(item):
                 return ('exit', item)
         return (False, None)
-    
-    """
-    def nudge_towards_nearest_corner(self, obstacle):
-        # Find nearest corner of the collided obstacle
-        nearest_corner = None
-        min_distance = float('inf')
 
-        for corner in [obstacle.topleft, obstacle.topright, obstacle.bottomleft, obstacle.bottomright]:
-            distance = self.distance_to_corner(corner)
-            if distance < min_distance:
-                min_distance = distance
-                nearest_corner = corner
-
-        # Nudge towards the nearest corner
-        if nearest_corner:
-            nudge_direction = self.calculate_nudge_direction(nearest_corner)
-            self.position[0] += nudge_direction[0]
-            self.position[1] += nudge_direction[1]
-            self.update_collide_rect()
-
-    def distance_to_corner(self, corner):
-        actor_center = self.collision_center()
-        return math.sqrt((actor_center[0] - corner[0]) ** 2 + (actor_center[1] - corner[1]) ** 2)
-
-    def calculate_nudge_direction(self, corner):
-        # Determine the direction vector towards the corner
-        actor_center = self.collision_center()
-        direction = (corner[0] - actor_center[0], corner[1] - actor_center[1])
-
-        # Normalize the direction vector
-        magnitude = math.sqrt(direction[0]**2 + direction[1]**2)
-        if magnitude == 0:
-            return (0, 0)
-        return (direction[0] / magnitude, direction[1] / magnitude)
-    """
-    
     def real_rect(self, x, y):
         # Return the actual rect size for the sprite
         return pygame.Rect(
