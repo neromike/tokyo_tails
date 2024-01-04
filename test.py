@@ -1,7 +1,6 @@
 import pygame
 import sys
 import math
-import random
 
 # Initialize Pygame
 pygame.init()
@@ -514,6 +513,8 @@ class Actor(Entity):
         self.held_entity.held = False
         self.held_entity = None
 
+
+
 # NPC class
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
@@ -570,14 +571,13 @@ class NPC(Actor):
                         else:
                             self.move(315, self.speed)
 
-            
-
-    
+                
     
 # PLAYER class
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
+
 
 
 # Player setup
@@ -626,7 +626,6 @@ items.append(item_cat_food_bag)
 items.append(item_bed)
 items.append(player)
 items.append(cat)
-
 
 # Inventory setup
 INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
@@ -692,14 +691,15 @@ add_to_inventory("queso")
 add_to_inventory("black cat")
 add_to_inventory("orange cat")
 
-
 def check_interaction(object1, object2):
     if object1.check_collision(object2):
         if object1.collide_rect.collidepoint(adjusted_mouse_pos) or object2.collide_rect.collidepoint(adjusted_mouse_pos):
             return True
     return False
 
-# Game loop
+
+
+# GAME LOOP
 running = True
 current_day = None
 current_time = None
