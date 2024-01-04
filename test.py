@@ -330,8 +330,14 @@ class Actor(Entity):
             self.update_collide_rect()
 
         # Actor doesn't move if collision on both x and y
+        # but nudge the actor is they hit x OR y and are near a corner
         if x_collision[0] and y_collision[0]:
             self.is_moving = False
+        elif x_collision[0] or y_collision[0]:
+            if x_collision[0]:
+                self.nudge_towards_corner(x_collision[1], 'y')
+            elif y_collision[0]:
+                self.nudge_towards_corner(y_collision[1], 'x')
     
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
@@ -346,6 +352,39 @@ class Actor(Entity):
             if new_rect.colliderect(item):
                 return ('exit', item)
         return (False, None)
+
+    def nudge_towards_corner(self, item, axis):
+        # C
+        if hasattr(item, 'collide_rect'):
+            item = item.collide_rect
+        
+        # Nudges the actor towards the nearest corner of the item.
+        corners = [
+            (item.left, item.top),  # Top-left
+            (item.right, item.top),  # Top-right
+            (item.left, item.bottom),  # Bottom-left
+            (item.right, item.bottom)  # Bottom-right
+        ]
+        nearest_corner = min(corners, key=lambda corner: self.distance_to_corner(corner))
+        nudge_amount = 5  # Adjust this value as needed
+
+        if axis == 'x':
+            if nearest_corner[0] > self.position[0]:
+                self.position[0] -= nudge_amount
+            else:
+                self.position[0] += nudge_amount
+        elif axis == 'y':
+            if nearest_corner[1] > self.position[1]:
+                self.position[1] -= nudge_amount
+            else:
+                self.position[1] += nudge_amount
+
+        self.update_collide_rect()
+
+    def distance_to_corner(self, corner):
+        # Calculates the distance from the actor's center to a corner.
+        actor_center = self.collision_center()
+        return ((actor_center[0] - corner[0]) ** 2 + (actor_center[1] - corner[1]) ** 2) ** 0.5
 
     def real_rect(self, x, y):
         # Return the actual rect size for the sprite
