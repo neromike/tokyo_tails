@@ -561,20 +561,50 @@ cat.sprite = {
 # cat2 setup
 cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
 cat2.is_dynamic = True
-sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
 cat2.sprite = {
-    'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
-    'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
-    'right': [cat.get_sprite(0, 2), cat.get_sprite(1, 2), cat.get_sprite(2, 2)],
-    'up': [cat.get_sprite(0, 3), cat.get_sprite(1, 3), cat.get_sprite(2, 3)],
-    'idle_down': cat.get_sprite(0, 0),
-    'idle_left': cat.get_sprite(0, 1),
-    'idle_right': cat.get_sprite(0, 2),
-    'idle_up': cat.get_sprite(0, 3)
+    'down': [cat2.get_sprite(3, 0), cat2.get_sprite(4, 0), cat2.get_sprite(5, 0)],
+    'left': [cat2.get_sprite(3, 1), cat2.get_sprite(4, 1), cat2.get_sprite(5, 1)],
+    'right': [cat2.get_sprite(3, 2), cat2.get_sprite(4, 2), cat2.get_sprite(5, 2)],
+    'up': [cat2.get_sprite(3, 3), cat2.get_sprite(4, 3), cat2.get_sprite(5, 3)],
+    'idle_down': cat2.get_sprite(3, 0),
+    'idle_left': cat2.get_sprite(3, 1),
+    'idle_right': cat2.get_sprite(3, 2),
+    'idle_up': cat2.get_sprite(3, 3)
 }
+
+# cat3 setup
+cat3 = NPC(position=[1550, 730], energy=20, speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
+cat3.is_dynamic = True
+cat3.sprite = {
+    'down': [cat3.get_sprite(6, 0), cat3.get_sprite(7, 0), cat3.get_sprite(8, 0)],
+    'left': [cat3.get_sprite(6, 1), cat3.get_sprite(7, 1), cat3.get_sprite(8, 1)],
+    'right': [cat3.get_sprite(6, 2), cat3.get_sprite(7, 2), cat3.get_sprite(8, 2)],
+    'up': [cat3.get_sprite(6, 3), cat3.get_sprite(7, 3), cat3.get_sprite(8, 3)],
+    'idle_down': cat3.get_sprite(6, 0),
+    'idle_left': cat3.get_sprite(6, 1),
+    'idle_right': cat3.get_sprite(6, 2),
+    'idle_up': cat3.get_sprite(6, 3)
+}
+
+# cat4 setup
+cat4 = NPC(position=[1550, 700], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
+cat4.is_dynamic = True
+cat4.sprite = {
+    'down': [cat4.get_sprite(9, 0), cat4.get_sprite(10, 0), cat4.get_sprite(11, 0)],
+    'left': [cat4.get_sprite(9, 1), cat4.get_sprite(10, 1), cat4.get_sprite(11, 1)],
+    'right': [cat4.get_sprite(9, 2), cat4.get_sprite(10, 2), cat4.get_sprite(11, 2)],
+    'up': [cat4.get_sprite(9, 3), cat4.get_sprite(10, 3), cat4.get_sprite(11, 3)],
+    'idle_down': cat4.get_sprite(9, 0),
+    'idle_left': cat4.get_sprite(9, 1),
+    'idle_right': cat4.get_sprite(9, 2),
+    'idle_up': cat4.get_sprite(9, 3)
+}
+
 npcs = []
 npcs.append(cat)
 npcs.append(cat2)
+npcs.append(cat3)
+npcs.append(cat4)
 
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
@@ -593,6 +623,8 @@ items.append(item_bed)
 items.append(player)
 items.append(cat)
 items.append(cat2)
+items.append(cat3)
+items.append(cat4)
 
 # Inventory setup
 INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
