@@ -697,6 +697,15 @@ while running:
             if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
                 player.show_bubble(image=bubble['heart'])
+        elif event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:
+                active_slot_index += 1
+                if active_slot_index >= INV_NUM:
+                    active_slot_index = 0
+            elif event.y < 0:
+                active_slot_index -= 1
+                if active_slot_index < 0:
+                    active_slot_index = INV_NUM - 1
 
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
