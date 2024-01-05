@@ -5,7 +5,7 @@ import math
 
 # Initialize Pygame
 pygame.init()
-
+clock = pygame.time.Clock()
 
 
 # Constants
@@ -860,6 +860,11 @@ while running:
     time_surface = font.render(time_string, True, (255, 255, 255))
     screen.blit(time_surface, (10, 10))
 
+    # Draw the FPS
+    fps = str(int(clock.get_fps()))  # clock is your pygame.time.Clock() instance
+    fps_text = font.render(f'FPS: {fps}', True, (255, 255, 255))  # White color
+    screen.blit(fps_text, (10, 50))  # Position the FPS display; adjust as needed
+
     # Draw the inventory GUI
     draw_inventory_gui()
 
@@ -873,7 +878,7 @@ while running:
     pygame.display.flip()
 
     # Cap the frame rate
-    pygame.time.Clock().tick(60)
+    clock.tick(60)
 
 # Quit Pygame
 pygame.quit()
