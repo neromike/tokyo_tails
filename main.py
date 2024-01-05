@@ -1,17 +1,10 @@
 import pygame
+import os
 import sys
 import math
 
 # Initialize Pygame
 pygame.init()
-
-
-
-# Load and play background music
-pygame.mixer.init()
-pygame.mixer.music.load('1243769_Loneliness-Corrupts-Me-Lof.mp3')
-pygame.mixer.music.set_volume(1.0)  # Set the volume to full
-pygame.mixer.music.play()  # The -1 makes the music loop indefinitely
 
 
 
@@ -24,6 +17,16 @@ START_MINUTE = 0  # Start time (minute)
 INITIAL_TIME_OFFSET = (START_HOUR * 60 + START_MINUTE) * (MILLISECONDS_PER_HOUR / 60)
 START_TIME = pygame.time.get_ticks() + INITIAL_TIME_OFFSET
 FONT_SIZE = 20
+IMAGE_ASSET_PATH = 'asset_image'
+SOUND_ASSET_PATH = 'asset_sound'
+
+
+
+# Load and play background music
+pygame.mixer.init()
+pygame.mixer.music.load(os.path.join(SOUND_ASSET_PATH, '1243769_Loneliness-Corrupts-Me-Lof.mp3'))
+pygame.mixer.music.set_volume(1.0)  # Set the volume to full
+pygame.mixer.music.play()  # The -1 makes the music loop indefinitely
 
 
 
@@ -201,13 +204,13 @@ pygame.display.set_caption("Tokyo Tails")
 font = pygame.font.Font(None, FONT_SIZE)
 
 # Load image assets
-background_layer = pygame.image.load('background_cafe3.png').convert_alpha()
+background_layer = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_cafe3.png')).convert_alpha()
 item_images = {
-    "asset_cat_food_bag": pygame.image.load('asset_item_cat_food_bag.png').convert_alpha(),
-    "asset_cat_food_bowl": pygame.image.load('asset_item_cat_food_bowl.png').convert_alpha(),
+    "asset_cat_food_bag": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_item_cat_food_bag.png')).convert_alpha(),
+    "asset_cat_food_bowl": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_item_cat_food_bowl.png')).convert_alpha(),
 }
 bubble = {
-    "heart": pygame.image.load('asset_bubble_heart.png').convert_alpha(),
+    "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_bubble_heart.png')).convert_alpha(),
 }
 
 
@@ -240,7 +243,7 @@ class Entity:
         # checks if this entity's collide_rect intersects with the second object's collide_rect
         return self.collide_rect.colliderect(object2.collide_rect.inflate(proximity, proximity))
     def load_image(self):
-        self.image = pygame.image.load(self.file_name).convert_alpha()
+        self.image = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.file_name)).convert_alpha()
         self.sprite_size = self.image.get_width()
     def get_z_order(self):
         # Assuming y-coordinate determines depth
@@ -520,7 +523,7 @@ room_exits.append( Entity((330, 0), collision_rect_offset=(0,0), collision_rect_
 
 # Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', is_dynamic=True, sprite_size=128)
-sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))  # Update with the path to your sprite sheet
 player.sprite = {
     'idle_down': player.get_sprite(0, 0),
     'idle_up': player.get_sprite(0, 1),
@@ -534,7 +537,7 @@ player.sprite = {
 
 # cat setup
 cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
-sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat2_64.png'))  # Update with the path to your sprite sheet
 cat.sprite = {
     'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
     'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
@@ -750,14 +753,13 @@ while running:
                 dragging_item_index = None
         elif event.type == pygame.MOUSEWHEEL:
             if event.y > 0:
-                active_slot_index += 1
-                if active_slot_index >= INV_NUM:
-                    active_slot_index = 0
-            elif event.y < 0:
                 active_slot_index -= 1
                 if active_slot_index < 0:
                     active_slot_index = INV_NUM - 1
-
+            elif event.y < 0:
+                active_slot_index += 1
+                if active_slot_index >= INV_NUM:
+                    active_slot_index = 0
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
     player.is_moving = False
