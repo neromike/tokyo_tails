@@ -630,11 +630,26 @@ cat4.sprite = {
     'idle_up': cat4.get_sprite(9, 3)
 }
 
+# cat5 setup
+cat5 = NPC(position=[1200, 500], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat_fluffy.png'))  # Update with the path to your sprite sheet
+cat5.sprite = {
+    'down': [cat5.get_sprite(0, 0), cat5.get_sprite(1, 0), cat5.get_sprite(2, 0)],
+    'left': [cat5.get_sprite(0, 1), cat5.get_sprite(1, 1), cat5.get_sprite(2, 1)],
+    'right': [cat5.get_sprite(0, 2), cat5.get_sprite(1, 2), cat5.get_sprite(2, 2)],
+    'up': [cat5.get_sprite(0, 3), cat5.get_sprite(1, 3), cat5.get_sprite(2, 3)],
+    'idle_down': cat5.get_sprite(0, 0),
+    'idle_left': cat5.get_sprite(0, 1),
+    'idle_right': cat5.get_sprite(0, 2),
+    'idle_up': cat5.get_sprite(0, 3)
+}
+
 npcs = []
 npcs.append(cat)
 npcs.append(cat2)
 npcs.append(cat3)
 npcs.append(cat4)
+npcs.append(cat5)
 
 
 
