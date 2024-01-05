@@ -5,6 +5,16 @@ import math
 # Initialize Pygame
 pygame.init()
 
+
+
+# Load and play background music
+pygame.mixer.init()
+pygame.mixer.music.load('1243769_Loneliness-Corrupts-Me-Lof.mp3')
+pygame.mixer.music.set_volume(1.0)  # Set the volume to full
+pygame.mixer.music.play()  # The -1 makes the music loop indefinitely
+
+
+
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
 MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
@@ -489,13 +499,12 @@ class NPC(Actor):
                         else:
                             self.move(315, self.speed)
 
-                
-    
+
+
 # PLAYER class
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=True, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
-
 
 
 
@@ -584,6 +593,8 @@ npcs.append(cat)
 npcs.append(cat2)
 npcs.append(cat3)
 npcs.append(cat4)
+
+
 
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
