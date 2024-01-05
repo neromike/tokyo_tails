@@ -214,11 +214,12 @@ bubble = {
     "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_bubble_heart.png')).convert_alpha(),
 }
 
-
-
 # ENTITY class
 class Entity:
-    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False):
+
+    entities = []
+
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False, icon = None):
         self.position = position
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
@@ -226,13 +227,16 @@ class Entity:
         self.is_dynamic = is_dynamic
         self.image = None
         self.sprite_size = sprite_size
-        self.dynamic_sprite = None
         self.collide_rect = None
         self.update_collide_rect()
         if not self.file_name == '':
-            self.load_image()
+            self.image = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.file_name)).convert_alpha()
+            self.sprite_size = self.image.get_width()
         self.holdable = holdable
         self.held = False
+        self.icon = icon
+        self.entities.append(self)
+
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
     def check_collision(self, object2, proximity=20, update_first=True):
@@ -240,19 +244,17 @@ class Entity:
         if update_first:
             self.update_collide_rect()
             object2.update_collide_rect()
-
         # checks if this entity's collide_rect intersects with the second object's collide_rect
         return self.collide_rect.colliderect(object2.collide_rect.inflate(proximity, proximity))
-    def load_image(self):
-        self.image = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.file_name)).convert_alpha()
-        self.sprite_size = self.image.get_width()
     def get_z_order(self):
         # Assuming y-coordinate determines depth
         return self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)
-    def set_dynamic_sprite(self, sprite):
+    def set_sprite(self, sprite):
         if self.is_dynamic:
-            self.dynamic_sprite = sprite
+            self.image = sprite
     def collision_center(self):
+        if self.held:
+            self.position = player.position
         return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
     def get_sprite(self, x, y):
         # Extracts and returns a single sprite from the sprite sheet.
@@ -260,6 +262,17 @@ class Entity:
         image.blit(sprite_sheet, (0, 0), (x * self.sprite_size, y * self.sprite_size, self.sprite_size, self.sprite_size))
         image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
         return image
+
+    def blit(self,camera_offset,screen,override = False):
+        if not self.held or override:
+            screen.blit(self.image, (self.position[0]-camera_offset[0],self.position[1]-camera_offset[1]))
+
+    def interact(self):
+        if self.holdable:
+            if add_to_inventory(self):
+                self.held = True
+
+
 
 
 
@@ -531,6 +544,10 @@ class NPC(Actor):
             self.task = random.choice(CAT_ACTIVITIES)
             print(f'new activity:{self.task}')
 
+    def interact(self):
+        global player
+        player.show_bubble(image=bubble['heart'])
+
 
 # PLAYER class
 class Player(Actor):
@@ -630,8 +647,8 @@ npcs.append(cat4)
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
-item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True)
-item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True)
+item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True, icon=item_images["asset_cat_food_bowl"])
+item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True, icon=item_images["asset_cat_food_bag"])
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all items
@@ -665,7 +682,8 @@ def add_to_inventory(item):
 def remove_from_inventory(item):
     # Removes an item from the inventory.
     if item in inventory:
-        inventory.remove(item)
+        i = inventory.index(item)
+        inventory[i] = None
         return True
     return False
 def draw_inventory_gui():
@@ -691,8 +709,7 @@ def draw_inventory_gui():
 
         if inventory[i] is not None:
             # Draw item image
-            item_image = item_images[inventory[i]]
-            screen.blit(item_image, (item_x, item_y))
+            screen.blit(inventory[i].icon, (item_x, item_y))
         else:
             # Draw empty slot
             pygame.draw.rect(screen, empty_slot_color, (item_x, item_y, INV_DISPLAY_SIZE, INV_DISPLAY_SIZE))
@@ -758,17 +775,11 @@ while running:
                     remove_from_inventory('asset_cat_food_bag')
                 player.drop_entity()
             """
-
             # Check if the player is near the cat
-            if check_interaction(player, item_cat_food):
-                if add_to_inventory('asset_cat_food_bowl'):
-                    player.hold_entity(item_cat_food)
-            if check_interaction(player, item_cat_food_bag):
-                if add_to_inventory('asset_cat_food_bag'):
-                    player.hold_entity(item_cat_food_bag)
-            if check_interaction(player, cat):
-                #player.show_bubble(text="Kitty!")
-                player.show_bubble(image=bubble['heart'])
+            for entity in Entity.entities:
+                if check_interaction(player, entity):
+                    entity.interact()
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button not in (4,5):   # button 4 or 5 gets a BUTTONUP event when the MOUSEWHEEL is moved
                 clicked_slot = check_inventory_click(mouse_pos[0], mouse_pos[1])
@@ -780,8 +791,13 @@ while running:
                     # Swap the items
                     print(f'dragging_item_index:{dragging_item_index} release_slot:{release_slot}')
                     inventory[dragging_item_index], inventory[release_slot] = inventory[release_slot], inventory[dragging_item_index]
+                elif dragging_item is not None:
+                    dragging_item.position = [player.position[0]-10,player.position[1]]
+                    dragging_item.held = False
+                    remove_from_inventory(dragging_item)
                 dragging_item = None
                 dragging_item_index = None
+
         elif event.type == pygame.MOUSEWHEEL:
             if event.y > 0:
                 active_slot_index -= 1
@@ -820,7 +836,7 @@ while running:
         sprite_to_draw = player.sprite[player.current_direction][round(player.pose_index / 3)]
     else:
         sprite_to_draw = player.sprite[f'idle_{player.current_direction}']
-    player.set_dynamic_sprite(sprite_to_draw)
+    player.set_sprite(sprite_to_draw)
 
     # Update the player bubble
     player.update_bubble()
@@ -838,7 +854,7 @@ while running:
                 sprite_to_draw = npc.sprite[npc.current_direction][round(npc.pose_index / 3)]
             else:
                 sprite_to_draw = npc.sprite[f'idle_{npc.current_direction}']
-            npc.set_dynamic_sprite(sprite_to_draw)
+            npc.set_sprite(sprite_to_draw)
 
     # Update held object positions
     player.update_held_position()
@@ -856,20 +872,18 @@ while running:
     all_entities = items + npcs + [player]
     all_entities.sort(key=lambda obj: obj.get_z_order())
     for obj in all_entities:
-        if not obj.held:
-            image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
-            if image_to_blit:
-                screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
+        obj.blit(camera_offset, screen)
 
     # Draw held items
+    """
     for obj in items:
         if obj.held:
             print(obj, inventory[active_slot_index])
             if inventory[active_slot_index] == obj:
-                image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
+                image_to_blit = obj.image
                 if image_to_blit:
                     screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
-
+    """
     # Draw the player bubble
     if player.bubble_visible and player.bubble_surface:
         # Adjust bubble_position as needed to position it above the actor
@@ -903,8 +917,7 @@ while running:
     # Draw dragging inventory items
     if dragging_item:
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        item_image = item_images[dragging_item]
-        screen.blit(item_image, (mouse_x - INV_DISPLAY_SIZE // 2, mouse_y - INV_DISPLAY_SIZE // 2))
+        screen.blit(dragging_item.icon, (mouse_x - INV_DISPLAY_SIZE // 2, mouse_y - INV_DISPLAY_SIZE // 2))
 
     # Flip
     pygame.display.flip()
