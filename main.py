@@ -2,6 +2,7 @@ import pygame
 import os
 import sys
 import math
+import random
 
 # Initialize Pygame
 pygame.init()
@@ -444,19 +445,30 @@ class Actor(Entity):
 
 
 # NPC class
+CAT_ACTIVITIES = ['', 'find-food', 'eat', 'find-toy', 'play', 'find-sleep', 'sleep', 'explore']
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic=False, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
         self.happiness = 50
-        self.fullness = 50
-        self.bored = 50
-        self.motivation = 0
-        self.motivation_threshold = 75  # Define a threshold for motivation
+        self.fullness = random.randint(50,90)
+        self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes - (5 * 60 * 1000)
         self.direction = 0
-        self.task = 'eat'
+        self.task = ''
         self.destination = []
+        self.time_since_last_activity_change = 0
+        self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
-        if self.task == 'eat':
+        # Update the activity change timer
+        self.time_since_last_activity_change += 1
+        
+        # Digest food
+        self.fullness -= self.digest_speed
+
+        # Check for hunger
+        if self.fullness <= 20 and self.task != 'find food':
+            self.task = 'find-food'
+
+        if self.task == 'find-food':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
             if item_cat_food.held:
@@ -499,6 +511,10 @@ class NPC(Actor):
                         else:
                             self.move(315, self.speed)
 
+        if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
+            self.time_since_last_activity_change = 0
+            self.task = random.choice(CAT_ACTIVITIES)
+            print(f'new activity:{self.task}')
 
 
 # PLAYER class
@@ -795,6 +811,7 @@ while running:
     player.update_bubble()
 
     # Update NPC states
+    #print(f'cat1.fullness{cat.fullness} cat2.fullness{cat2.fullness} cat3.fullness{cat3.fullness} cat4.fullness{cat4.fullness}')
     for npc in npcs:
         npc.update()
 
