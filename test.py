@@ -203,11 +203,8 @@ font = pygame.font.Font(None, FONT_SIZE)
 # Load image assets
 background_layer = pygame.image.load('background_cafe3.png').convert_alpha()
 item_images = {
-    "schmuppy": pygame.image.load('asset_item_schmuppy.png').convert_alpha(),
-    "queso": pygame.image.load('asset_item_queso.png').convert_alpha(),
-    "black cat": pygame.image.load('asset_item_black_cat.png').convert_alpha(),
-    "orange cat": pygame.image.load('asset_item_orange_cat.png').convert_alpha(),
     "asset_cat_food_bag": pygame.image.load('asset_item_cat_food_bag.png').convert_alpha(),
+    "asset_cat_food_bowl": pygame.image.load('asset_item_cat_food_bowl.png').convert_alpha(),
 }
 bubble = {
     "heart": pygame.image.load('asset_bubble_heart.png').convert_alpha(),
@@ -616,19 +613,20 @@ items.append(item_bed)
 # Inventory setup
 INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
 INV_NUM = 12             # Number of inventory slots shown
-MAX_INVENTORY_SIZE = 36  # Maximum number of items in the inventory
 INV_PADDING = 10
 INV_BASE_X = (SCREEN_WIDTH / 2) - (((INV_DISPLAY_SIZE + INV_PADDING) * INV_NUM) / 2)
 INV_BASE_Y = 10
 active_slot_index = 0
-inventory = []
+inventory = [None] * INV_NUM
+dragging_item = None
+dragging_item_index = None
 def add_to_inventory(item):
-    # Adds an item to the inventory if there's space.
-    if len(inventory) < MAX_INVENTORY_SIZE:
-        global active_slot_index
-        active_slot_index = len(inventory)
-        inventory.append(item)
-        return True
+    # Find the next empty inventory slot
+    for i in range(INV_NUM):
+        if inventory[i] is None:
+            inventory[i] = item
+            #active_slot_index = i
+            return True
     return False
 def remove_from_inventory(item):
     # Removes an item from the inventory.
@@ -657,7 +655,7 @@ def draw_inventory_gui():
         # Draw border for the slot
         pygame.draw.rect(screen, border_color, (item_x - border_width, item_y - border_width, INV_DISPLAY_SIZE + (border_width * 2), INV_DISPLAY_SIZE + (border_width * 2)))
 
-        if i < len(inventory):
+        if inventory[i] is not None:
             # Draw item image
             item_image = item_images[inventory[i]]
             screen.blit(item_image, (item_x, item_y))
@@ -674,10 +672,8 @@ def check_inventory_click(mouse_x, mouse_y):
         if item_rect.collidepoint(mouse_x, mouse_y):
             return i  # Return the index of the clicked inventory slot
     return None
-add_to_inventory("schmuppy")
-add_to_inventory("queso")
-add_to_inventory("black cat")
-add_to_inventory("orange cat")
+
+
 
 def check_interaction(object1, object2):
     if object1.check_collision(object2):
@@ -705,6 +701,7 @@ while running:
     in_game_minute = int((current_time % MILLISECONDS_PER_HOUR) / (MILLISECONDS_PER_HOUR / 60))
 
     for event in pygame.event.get():
+        #print(event)
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -714,26 +711,43 @@ while running:
             # Check if an inventory item was clicked
             clicked_slot = check_inventory_click(mouse_pos[0], mouse_pos[1])
             if clicked_slot is not None:
-                active_slot_index = clicked_slot
+                dragging_item = inventory[clicked_slot]
+                dragging_item_index = clicked_slot
 
             # Adjust mouse position based on camera offset
             adjusted_mouse_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
 
+            """
             # Drop an item if it is being held
             if player.held_entity is not None:
                 if player.held_entity == item_cat_food_bag:
                     remove_from_inventory('asset_cat_food_bag')
                 player.drop_entity()
+            """
 
             # Check if the player is near the cat
             if check_interaction(player, item_cat_food):
-                player.hold_entity(item_cat_food)
+                if add_to_inventory('asset_cat_food_bowl'):
+                    player.hold_entity(item_cat_food)
             if check_interaction(player, item_cat_food_bag):
                 if add_to_inventory('asset_cat_food_bag'):
                     player.hold_entity(item_cat_food_bag)
             if check_interaction(player, cat):
                 #player.show_bubble(text="Kitty!")
                 player.show_bubble(image=bubble['heart'])
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button not in (4,5):   # button 4 or 5 gets a BUTTONUP event when the MOUSEWHEEL is moved
+                clicked_slot = check_inventory_click(mouse_pos[0], mouse_pos[1])
+                if clicked_slot is not None:
+                    active_slot_index = clicked_slot
+                    print(f'active_slot_index:{active_slot_index}')
+                release_slot = check_inventory_click(event.pos[0], event.pos[1])
+                if release_slot is not None and dragging_item is not None:
+                    # Swap the items
+                    print(f'dragging_item_index:{dragging_item_index} release_slot:{release_slot}')
+                    inventory[dragging_item_index], inventory[release_slot] = inventory[release_slot], inventory[dragging_item_index]
+                dragging_item = None
+                dragging_item_index = None
         elif event.type == pygame.MOUSEWHEEL:
             if event.y > 0:
                 active_slot_index += 1
@@ -808,9 +822,19 @@ while running:
     all_entities = items + npcs + [player]
     all_entities.sort(key=lambda obj: obj.get_z_order())
     for obj in all_entities:
-        image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
-        if image_to_blit:
-            screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
+        if not obj.held:
+            image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
+            if image_to_blit:
+                screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
+
+    # Draw held items
+    for obj in items:
+        if obj.held:
+            print(obj, inventory[active_slot_index])
+            if inventory[active_slot_index] == obj:
+                image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
+                if image_to_blit:
+                    screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
 
     # Draw the player bubble
     if player.bubble_visible and player.bubble_surface:
@@ -830,14 +854,18 @@ while running:
     in_game_hour = in_game_hour % 12
     if in_game_hour == 0:
         in_game_hour = 12  # Adjust for midnight and noon
-
-    # Create time string with AM/PM
     time_string = f"Day {current_day}, {in_game_hour:02}:{in_game_minute:02} {am_pm}"
     time_surface = font.render(time_string, True, (255, 255, 255))
     screen.blit(time_surface, (10, 10))
 
     # Draw the inventory GUI
     draw_inventory_gui()
+
+    # Draw dragging inventory items
+    if dragging_item:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        item_image = item_images[dragging_item]
+        screen.blit(item_image, (mouse_x - INV_DISPLAY_SIZE // 2, mouse_y - INV_DISPLAY_SIZE // 2))
 
     # Flip
     pygame.display.flip()
