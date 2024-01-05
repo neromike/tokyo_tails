@@ -38,21 +38,18 @@ def mark_obstacles_on_grid():
     # Now mark the impassable cells
     for obstacle in room_obstacles + items:
         
-        # Skip the obstacles created by NPCs and the player
-        if obstacle.__class__.__name__ != 'NPC' and obstacle.__class__.__name__ != 'Player':
-        
-            # Calculate the range of grid cells this obstacle occupies
-            if hasattr(obstacle, 'collide_rect'):
-                obstacle = obstacle.collide_rect
+        # Calculate the range of grid cells this obstacle occupies
+        if hasattr(obstacle, 'collide_rect'):
+            obstacle = obstacle.collide_rect
 
-            if obstacle is not None:
-                top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
-                bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
+        if obstacle is not None:
+            top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
+            bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
 
-                for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
-                    for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
-                        if 0 <= x < grid_width and 0 <= y < grid_height:
-                            grid[y][x] = True  # Mark cell as impassable
+            for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
+                for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
+                    if 0 <= x < grid_width and 0 <= y < grid_height:
+                        grid[y][x] = True  # Mark cell as impassable
     return grid
 def draw_grid(passable_color=(0, 255, 0), impassable_color=(255, 0, 0)):
     for y, row in enumerate(grid):
@@ -530,7 +527,6 @@ class Player(Actor):
 
 # Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', is_dynamic=True, sprite_size=128)
-player.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
 player.sprite = {
     'idle_down': player.get_sprite(0, 0),
@@ -609,18 +605,15 @@ item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdabl
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True)
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
-# Master list of all objects, including the player and NPCs
+# Master list of all items
 items = []
 items.append(item_table)
 items.append(item_shelf)
 items.append(item_cat_food)
 items.append(item_cat_food_bag)
 items.append(item_bed)
-items.append(player)
-items.append(cat)
-items.append(cat2)
-items.append(cat3)
-items.append(cat4)
+
+
 
 # Inventory setup
 INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
@@ -814,8 +807,9 @@ while running:
     screen.blit(background_layer, (0 - camera_offset[0], 0 - camera_offset[1]))
 
     # Draw the rest of the items
-    items.sort(key=lambda obj: obj.get_z_order())
-    for obj in items:
+    all_entities = items + npcs + [player]
+    all_entities.sort(key=lambda obj: obj.get_z_order())
+    for obj in all_entities:
         image_to_blit = obj.dynamic_sprite if obj.is_dynamic else obj.image
         if image_to_blit:
             screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
