@@ -451,21 +451,38 @@ class NPC(Actor):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
         self.happiness = 50
         self.fullness = random.randint(50,90)
-        self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes - (5 * 60 * 1000)
+        self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
         self.direction = 0
         self.task = ''
         self.destination = []
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
+        #print(self.task)
         # Update the activity change timer
         self.time_since_last_activity_change += 1
         
         # Digest food
         self.fullness -= self.digest_speed
 
+        # Eat food
+        if self.task == 'eat':
+            #print('EAT')
+            # Check if there is a food bowl nearby
+            #if self.check_collision_with_obstacles(item_cat_food_bowl)[0]:
+
+            # Eat the food
+            self.fullness += 5
+
+            # The cat gets more full
+            if self.fullness >= 100:
+                self.task = ''
+
+            # The bowl gets less full
+            #item_cat_food_bowl.energy -= 1
+
         # Check for hunger
-        if self.fullness <= 20 and self.task != 'find food':
+        if self.fullness <= 20:
             self.task = 'find-food'
 
         if self.task == 'find-food':
@@ -479,15 +496,12 @@ class NPC(Actor):
             # Figure out next step
             next_step = astar(cat_position, food_position)
             #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
-            if next_step == None:
-                #self.task = ''
-                pass
-            else:
+            if next_step is not None:
                 if len(next_step) > 1:
                     next_step = next_step[1]
                 else:
                     next_step = cat_position
-                    #self.task = ''
+                    self.task = 'eat'
             
                 # Move the cat if it's not next to the correct position
                 if next_step != cat_position:
@@ -511,6 +525,7 @@ class NPC(Actor):
                         else:
                             self.move(315, self.speed)
 
+        # Choose a new random activity after some time if not currently doing anything else
         if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
             self.time_since_last_activity_change = 0
             self.task = random.choice(CAT_ACTIVITIES)
