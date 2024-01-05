@@ -572,6 +572,9 @@ cat2.sprite = {
     'idle_right': cat.get_sprite(0, 2),
     'idle_up': cat.get_sprite(0, 3)
 }
+npcs = []
+npcs.append(cat)
+npcs.append(cat2)
 
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
@@ -757,22 +760,18 @@ while running:
     player.update_bubble()
 
     # Update NPC states
-    cat.update()
-    cat2.update()
+    for npc in npcs:
+        npc.update()
 
-    # Update cat game object sprite and position
-    if cat.is_moving:
-        cat.pose_index = (cat.pose_index + 1) % 8
-        sprite_to_draw = cat.sprite[cat.current_direction][round(cat.pose_index / 3)]
-    else:
-        sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
-    cat.set_dynamic_sprite(sprite_to_draw)
-    if cat2.is_moving:
-        cat2.pose_index = (cat2.pose_index + 1) % 8
-        sprite_to_draw = cat2.sprite[cat2.current_direction][round(cat2.pose_index / 3)]
-    else:
-        sprite_to_draw = cat2.sprite[f'idle_{cat.current_direction}']
-    cat2.set_dynamic_sprite(sprite_to_draw)
+    # Update NPC sprites
+    for npc in npcs:
+        if npc.is_dynamic:
+            if npc.is_moving:
+                npc.pose_index = (npc.pose_index + 1) % 8
+                sprite_to_draw = npc.sprite[npc.current_direction][round(npc.pose_index / 3)]
+            else:
+                sprite_to_draw = npc.sprite[f'idle_{npc.current_direction}']
+            npc.set_dynamic_sprite(sprite_to_draw)
 
     # Update held object positions
     player.update_held_position()
