@@ -253,8 +253,6 @@ class Entity:
         if self.is_dynamic:
             self.image = sprite
     def collision_center(self):
-        if self.held:
-            self.position = player.position
         return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
     def get_sprite(self, x, y):
         # Extracts and returns a single sprite from the sprite sheet.
@@ -263,14 +261,15 @@ class Entity:
         image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
         return image
 
-    def blit(self,camera_offset,screen,override = False):
+    def blit(self, camera_offset, screen, override = False):
         if not self.held or override:
-            screen.blit(self.image, (self.position[0]-camera_offset[0],self.position[1]-camera_offset[1]))
+            screen.blit(self.image, (self.position[0]-camera_offset[0], self.position[1]-camera_offset[1]))
 
     def interact(self):
         if self.holdable:
             if add_to_inventory(self):
                 self.held = True
+                self.position = player.position
 
 
 
@@ -471,6 +470,8 @@ class NPC(Actor):
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
+        self.task="find-food"
+        self.fullness = 0
         #print(self.task)
         # Update the activity change timer
         self.time_since_last_activity_change += 1
@@ -675,7 +676,6 @@ def add_to_inventory(item):
     for i in range(INV_NUM):
         if inventory[i] is None:
             inventory[i] = item
-            #active_slot_index = i
             return True
     return False
 def remove_from_inventory(item):
@@ -784,11 +784,11 @@ while running:
                 clicked_slot = check_inventory_click(mouse_pos[0], mouse_pos[1])
                 if clicked_slot is not None:
                     active_slot_index = clicked_slot
-                    print(f'active_slot_index:{active_slot_index}')
+                    #print(f'active_slot_index:{active_slot_index}')
                 release_slot = check_inventory_click(event.pos[0], event.pos[1])
                 if release_slot is not None and dragging_item is not None:
                     # Swap the items
-                    print(f'dragging_item_index:{dragging_item_index} release_slot:{release_slot}')
+                    #print(f'dragging_item_index:{dragging_item_index} release_slot:{release_slot}')
                     inventory[dragging_item_index], inventory[release_slot] = inventory[release_slot], inventory[dragging_item_index]
                 elif dragging_item is not None:
                     dragging_item.position = [player.position[0]-10,player.position[1]]
@@ -874,15 +874,9 @@ while running:
         obj.blit(camera_offset, screen)
 
     # Draw held items
-    """
-    for obj in items:
-        if obj.held:
-            print(obj, inventory[active_slot_index])
-            if inventory[active_slot_index] == obj:
-                image_to_blit = obj.image
-                if image_to_blit:
-                    screen.blit(image_to_blit, (obj.position[0] - camera_offset[0], obj.position[1] - camera_offset[1]))
-    """
+    if inventory[active_slot_index] is not None:
+        inventory[active_slot_index].blit(camera_offset, screen, True)
+
     # Draw the player bubble
     if player.bubble_visible and player.bubble_surface:
         # Adjust bubble_position as needed to position it above the actor
