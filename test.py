@@ -45,7 +45,7 @@ def mark_obstacles_on_grid():
             if hasattr(obstacle, 'collide_rect'):
                 obstacle = obstacle.collide_rect
 
-            if obstacle != None:
+            if obstacle is not None:
                 top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
                 bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
 
@@ -213,7 +213,7 @@ bubble = {
 
 
 
-# Setup the room
+# Set up the room
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
 room_obstacles = []
 room_obstacles.append( pygame.Rect(0, 0, 370, 330) )          # top-left
@@ -344,14 +344,14 @@ class Actor(Entity):
         for item in items:
             if item is not self and item.collide_rect is not None:
                 if new_rect.colliderect(item.collide_rect):
-                    return ('item', item)
+                    return 'item', item
         for item in room_obstacles:
             if new_rect.colliderect(item):
-                return ('room', item)
+                return 'room', item
         for item in room_exits:
             if new_rect.colliderect(item):
-                return ('exit', item)
-        return (False, None)
+                return 'exit', item
+        return False, None
 
     def nudge_towards_corner(self, item, axis):
         # Use the collide_rect if it exists, otherwise use the rect
@@ -449,7 +449,7 @@ class Actor(Entity):
             print(entity.file_name.replace('.png',''))
 
     def update_held_position(self):
-        if self.held_entity != None:
+        if self.held_entity is not None:
             self.held_entity.position[0] = self.position[0] + (self.sprite_size // 2) - (self.held_entity.image.get_width() // 2)
             self.held_entity.position[1] = self.position[1] - self.held_entity.collision_rect_size[1]
             self.held_entity.collide_rect = None
@@ -565,7 +565,7 @@ item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdabl
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True)
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
-# Master list of all objects, includig the player and NPCs
+# Master list of all objects, including the player and NPCs
 items = []
 items.append(item_table)
 items.append(item_shelf)
@@ -654,7 +654,6 @@ running = True
 current_day = None
 current_time = None
 camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
-grid = initialize_grid()
 grid = mark_obstacles_on_grid()
 while running:
 
@@ -683,7 +682,7 @@ while running:
             adjusted_mouse_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
 
             # Drop an item if it is being held
-            if player.held_entity != None:
+            if player.held_entity is not None:
                 if player.held_entity == item_cat_food_bag:
                     remove_from_inventory('asset_cat_food_bag')
                 player.drop_entity()
@@ -778,7 +777,7 @@ while running:
         screen.blit(player.bubble_surface, bubble_position)
 
     # Draw the grid
-    draw_grid()
+    #draw_grid()
 
     # Draw the player coordinates
     text = font.render(f"({player.position[0]}, {player.position[1]})", True, (255,255,255))
