@@ -234,9 +234,9 @@ class Entity:
             self.sprite_size = self.image.get_width()
         self.holdable = holdable
         self.held = False
+        self.held_y_offset = 0
         self.icon = icon
         self.entities.append(self)
-
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
     def check_collision(self, object2, proximity=20, update_first=True):
@@ -260,18 +260,13 @@ class Entity:
         image.blit(sprite_sheet, (0, 0), (x * self.sprite_size, y * self.sprite_size, self.sprite_size, self.sprite_size))
         image.set_colorkey(image.get_at((0,0)))  # Assumes top-left pixel is the transparent color
         return image
-
     def blit(self, camera_offset, screen, override = False):
         if not self.held or override:
             screen.blit(self.image, (self.position[0]-camera_offset[0], self.position[1]-camera_offset[1]))
-
     def interact(self):
         if self.holdable:
             if add_to_inventory(self):
                 self.held = True
-                self.position = player.position
-
-
 
 
 
@@ -327,15 +322,15 @@ class Actor(Entity):
             self.update_collide_rect()
 
         # Actor doesn't move if collision on both x and y
-        # but nudge the actor is they hit x OR y and are near a corner
         if x_collision[0] and y_collision[0]:
             self.is_moving = False
         elif x_collision[0] or y_collision[0]:
+            # but nudge the actor is they hit x OR y and are near a corner
             if x_collision[0]:
                 self.nudge_towards_corner(x_collision[1], 'y')
             elif y_collision[0]:
                 self.nudge_towards_corner(y_collision[1], 'x')
-    
+
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
         for item in items:
@@ -441,17 +436,16 @@ class Actor(Entity):
             entity.held = True
             print(entity.file_name.replace('.png',''))
 
-    def update_held_position(self):
-        if self.held_entity is not None:
-            self.held_entity.position[0] = self.position[0] + (self.sprite_size // 2) - (self.held_entity.image.get_width() // 2)
-            self.held_entity.position[1] = self.position[1] - self.held_entity.collision_rect_size[1]
-            self.held_entity.collide_rect = None
+    def update_held_position(self, object):
+        object.position[0] = self.position[0] + (self.sprite_size // 2) - (object.image.get_width() // 2)
+        object.position[1] = self.position[1] - object.collision_rect_size[1] - object.held_y_offset
+        object.collide_rect = None
 
-    def drop_entity(self):
-        self.held_entity.position[0] = self.position[0] + self.collision_rect_offset[0] - self.held_entity.collision_rect_size[0] - 5
-        self.held_entity.position[1] = self.position[1] + self.collision_rect_offset[1] + self.collision_rect_size[1] - self.held_entity.collision_rect_size[1] - self.held_entity.collision_rect_offset[1]
-        self.held_entity.update_collide_rect()
-        self.held_entity.held = False
+    def drop_entity(self, object):
+        object.position[0] = self.position[0] + self.collision_rect_offset[0] - object.collision_rect_size[0] - 5
+        object.position[1] = self.position[1] + self.collision_rect_offset[1] + self.collision_rect_size[1] - object.collision_rect_size[1] - object.collision_rect_offset[1]
+        object.update_collide_rect()
+        object.held = False
         self.held_entity = None
 
 
@@ -648,7 +642,9 @@ npcs.append(cat4)
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
 item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True, icon=item_images["asset_cat_food_bowl"])
+item_cat_food.held_y_offset = 10
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True, icon=item_images["asset_cat_food_bag"])
+item_cat_food_bag.held_y_offset = 40
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all items
@@ -767,13 +763,6 @@ while running:
             # Adjust mouse position based on camera offset
             adjusted_mouse_pos = (mouse_pos[0] + camera_offset[0], mouse_pos[1] + camera_offset[1])
 
-            """
-            # Drop an item if it is being held
-            if player.held_entity is not None:
-                if player.held_entity == item_cat_food_bag:
-                    remove_from_inventory('asset_cat_food_bag')
-                player.drop_entity()
-            """
             # Check if the player is near the cat
             for entity in Entity.entities:
                 if check_interaction(player, entity):
@@ -791,8 +780,7 @@ while running:
                     #print(f'dragging_item_index:{dragging_item_index} release_slot:{release_slot}')
                     inventory[dragging_item_index], inventory[release_slot] = inventory[release_slot], inventory[dragging_item_index]
                 elif dragging_item is not None:
-                    dragging_item.position = [player.position[0]-10,player.position[1]]
-                    dragging_item.held = False
+                    player.drop_entity(dragging_item)
                     remove_from_inventory(dragging_item)
                 dragging_item = None
                 dragging_item_index = None
@@ -855,9 +843,6 @@ while running:
                 sprite_to_draw = npc.sprite[f'idle_{npc.current_direction}']
             npc.set_sprite(sprite_to_draw)
 
-    # Update held object positions
-    player.update_held_position()
-
     # Calculate camera offset based on player position
     camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
 
@@ -875,6 +860,7 @@ while running:
 
     # Draw held items
     if inventory[active_slot_index] is not None:
+        player.update_held_position(inventory[active_slot_index])
         inventory[active_slot_index].blit(camera_offset, screen, True)
 
     # Draw the player bubble
