@@ -545,7 +545,6 @@ class NPC(Actor):
             print(f'new activity:{self.task}')
 
     def interact(self):
-        global player
         player.show_bubble(image=bubble['heart'])
 
 
@@ -726,9 +725,9 @@ def check_inventory_click(mouse_x, mouse_y):
 
 
 
-def check_interaction(object1, object2):
+def check_interaction(object1, object2, inflation=20):
     if object1.check_collision(object2):
-        if object1.collide_rect.collidepoint(adjusted_mouse_pos) or object2.collide_rect.collidepoint(adjusted_mouse_pos):
+        if object1.collide_rect.inflate(inflation,inflation).collidepoint(adjusted_mouse_pos) or object2.collide_rect.inflate(inflation,inflation).collidepoint(adjusted_mouse_pos):
             return True
     return False
 
