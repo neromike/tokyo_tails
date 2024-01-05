@@ -37,14 +37,10 @@ def mark_obstacles_on_grid():
 
     # Now mark the impassable cells
     for obstacle in room_obstacles + items:
-        
-        # Calculate the range of grid cells this obstacle occupies
-        if hasattr(obstacle, 'collide_rect'):
-            obstacle = obstacle.collide_rect
 
-        if obstacle is not None:
-            top_left_cell = (obstacle.left // GRID_CELL_SIZE, obstacle.top // GRID_CELL_SIZE)
-            bottom_right_cell = (obstacle.right // GRID_CELL_SIZE, obstacle.bottom // GRID_CELL_SIZE)
+        if obstacle is not None and obstacle.collide_rect is not None:
+            top_left_cell = (obstacle.collide_rect.left // GRID_CELL_SIZE, obstacle.collide_rect.top // GRID_CELL_SIZE)
+            bottom_right_cell = (obstacle.collide_rect.right // GRID_CELL_SIZE, obstacle.collide_rect.bottom // GRID_CELL_SIZE)
 
             for x in range(top_left_cell[0], bottom_right_cell[0] + 1):
                 for y in range(top_left_cell[1], bottom_right_cell[1] + 1):
@@ -209,25 +205,6 @@ bubble = {
 
 
 
-
-# Set up the room
-BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
-room_obstacles = []
-room_obstacles.append( pygame.Rect(0, 0, 370, 330) )          # top-left
-room_obstacles.append( pygame.Rect(450, 0, 3000, 330) )       # top-right
-room_obstacles.append( pygame.Rect(0, 0, 80, 1080) )          # left
-room_obstacles.append( pygame.Rect(0, 1000, 3000, 1080) )     # bottom
-room_obstacles.append( pygame.Rect(2940, 0, 3000, 1080) )     # right
-
-room_obstacles.append( pygame.Rect(400, 400, 500, 30) )       # U obstacle
-room_obstacles.append( pygame.Rect(870, 450, 30, 200) )       # U obstacle
-room_obstacles.append( pygame.Rect(400, 650, 500, 30) )       # U obstacle
-
-room_exits = []
-room_exits.append( pygame.Rect(330, 0, 450, 310) )
-
-
-
 # ENTITY class
 class Entity:
     def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False):
@@ -343,24 +320,20 @@ class Actor(Entity):
                 if new_rect.colliderect(item.collide_rect):
                     return 'item', item
         for item in room_obstacles:
-            if new_rect.colliderect(item):
+            if new_rect.colliderect(item.collide_rect):
                 return 'room', item
         for item in room_exits:
-            if new_rect.colliderect(item):
+            if new_rect.colliderect(item.collide_rect):
                 return 'exit', item
         return False, None
 
     def nudge_towards_corner(self, item, axis):
-        # Use the collide_rect if it exists, otherwise use the rect
-        if hasattr(item, 'collide_rect'):
-            item = item.collide_rect
-        
         # Nudges the actor towards the nearest corner of the item.
         corners = [
-            (item.left, item.top),  # Top-left
-            (item.right, item.top),  # Top-right
-            (item.left, item.bottom),  # Bottom-left
-            (item.right, item.bottom)  # Bottom-right
+            (item.collide_rect.left, item.collide_rect.top),  # Top-left
+            (item.collide_rect.right, item.collide_rect.top),  # Top-right
+            (item.collide_rect.left, item.collide_rect.bottom),  # Bottom-left
+            (item.collide_rect.right, item.collide_rect.bottom)  # Bottom-right
         ]
         nearest_corner = min(corners, key=lambda corner: self.distance_to_corner(corner))
         nudge_amount = 3  # Adjust this value as needed
@@ -522,6 +495,20 @@ class NPC(Actor):
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=True, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
+
+
+
+
+# Set up the room
+BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
+room_obstacles = []
+room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(370,330)) )      # top-left
+room_obstacles.append( Entity((450, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,330)) )   # top-right
+room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(80,1080)) )      # left
+room_obstacles.append( Entity((0, 1000), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # bottom
+room_obstacles.append( Entity((2940, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # right
+room_exits = []
+room_exits.append( Entity((330, 0), collision_rect_offset=(0,0), collision_rect_size=(450,310)) )
 
 
 
