@@ -2,10 +2,11 @@ import pygame
 import os
 import sys
 import math
+import random
 
 # Initialize Pygame
 pygame.init()
-
+clock = pygame.time.Clock()
 
 
 # Constants
@@ -457,19 +458,47 @@ class Actor(Entity):
 
 
 # NPC class
+CAT_ACTIVITIES = ['', 'find-food', 'eat', 'find-toy', 'play', 'find-sleep', 'sleep', 'explore']
 class NPC(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic=False, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
         self.happiness = 50
-        self.fullness = 50
-        self.bored = 50
-        self.motivation = 0
-        self.motivation_threshold = 75  # Define a threshold for motivation
+        self.fullness = random.randint(50,90)
+        self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
         self.direction = 0
-        self.task = 'eat'
+        self.task = ''
         self.destination = []
+        self.time_since_last_activity_change = 0
+        self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
+        #print(self.task)
+        # Update the activity change timer
+        self.time_since_last_activity_change += 1
+        
+        # Digest food
+        self.fullness -= self.digest_speed
+
+        # Eat food
         if self.task == 'eat':
+            #print('EAT')
+            # Check if there is a food bowl nearby
+            #if self.check_collision_with_obstacles(item_cat_food_bowl)[0]:
+
+            # Eat the food
+            self.fullness += 5
+
+            # The cat gets more full
+            if self.fullness >= 100:
+                self.task = ''
+
+            # The bowl gets less full
+            #item_cat_food_bowl.energy -= 1
+
+        # Check for hunger
+        if self.fullness <= 20:
+            self.task = 'find-food'
+
+        if self.task == 'find-food':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
             if item_cat_food.held:
@@ -480,15 +509,12 @@ class NPC(Actor):
             # Figure out next step
             next_step = astar(cat_position, food_position)
             #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
-            if next_step == None:
-                #self.task = ''
-                pass
-            else:
+            if next_step is not None:
                 if len(next_step) > 1:
                     next_step = next_step[1]
                 else:
                     next_step = cat_position
-                    #self.task = ''
+                    self.task = 'eat'
             
                 # Move the cat if it's not next to the correct position
                 if next_step != cat_position:
@@ -511,6 +537,12 @@ class NPC(Actor):
                             self.move(0, self.speed)
                         else:
                             self.move(315, self.speed)
+
+        # Choose a new random activity after some time if not currently doing anything else
+        if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
+            self.time_since_last_activity_change = 0
+            self.task = random.choice(CAT_ACTIVITIES)
+            print(f'new activity:{self.task}')
 
     def interact(self):
         global player
@@ -810,6 +842,7 @@ while running:
     player.update_bubble()
 
     # Update NPC states
+    #print(f'cat1.fullness{cat.fullness} cat2.fullness{cat2.fullness} cat3.fullness{cat3.fullness} cat4.fullness{cat4.fullness}')
     for npc in npcs:
         npc.update()
 
@@ -873,6 +906,11 @@ while running:
     time_surface = font.render(time_string, True, (255, 255, 255))
     screen.blit(time_surface, (10, 10))
 
+    # Draw the FPS
+    fps = str(int(clock.get_fps()))  # clock is your pygame.time.Clock() instance
+    fps_text = font.render(f'FPS: {fps}', True, (255, 255, 255))  # White color
+    screen.blit(fps_text, (10, 50))  # Position the FPS display; adjust as needed
+
     # Draw the inventory GUI
     draw_inventory_gui()
 
@@ -885,7 +923,7 @@ while running:
     pygame.display.flip()
 
     # Cap the frame rate
-    pygame.time.Clock().tick(60)
+    clock.tick(60)
 
 # Quit Pygame
 pygame.quit()
