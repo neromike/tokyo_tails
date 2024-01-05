@@ -558,6 +558,21 @@ cat.sprite = {
     'idle_up': cat.get_sprite(0, 3)
 }
 
+# cat2 setup
+cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
+cat2.is_dynamic = True
+sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
+cat2.sprite = {
+    'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
+    'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
+    'right': [cat.get_sprite(0, 2), cat.get_sprite(1, 2), cat.get_sprite(2, 2)],
+    'up': [cat.get_sprite(0, 3), cat.get_sprite(1, 3), cat.get_sprite(2, 3)],
+    'idle_down': cat.get_sprite(0, 0),
+    'idle_left': cat.get_sprite(0, 1),
+    'idle_right': cat.get_sprite(0, 2),
+    'idle_up': cat.get_sprite(0, 3)
+}
+
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
@@ -574,6 +589,7 @@ items.append(item_cat_food_bag)
 items.append(item_bed)
 items.append(player)
 items.append(cat)
+items.append(cat2)
 
 # Inventory setup
 INV_DISPLAY_SIZE = 60    # Size of inventory items in pixels
@@ -742,6 +758,7 @@ while running:
 
     # Update NPC states
     cat.update()
+    cat2.update()
 
     # Update cat game object sprite and position
     if cat.is_moving:
@@ -750,6 +767,12 @@ while running:
     else:
         sprite_to_draw = cat.sprite[f'idle_{cat.current_direction}']
     cat.set_dynamic_sprite(sprite_to_draw)
+    if cat2.is_moving:
+        cat2.pose_index = (cat2.pose_index + 1) % 8
+        sprite_to_draw = cat2.sprite[cat2.current_direction][round(cat2.pose_index / 3)]
+    else:
+        sprite_to_draw = cat2.sprite[f'idle_{cat.current_direction}']
+    cat2.set_dynamic_sprite(sprite_to_draw)
 
     # Update held object positions
     player.update_held_position()
