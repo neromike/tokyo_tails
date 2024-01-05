@@ -280,8 +280,8 @@ class Entity:
 
 # ACTOR class
 class Actor(Entity):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
-        super().__init__(position, collision_rect_offset, collision_rect_size, sprite_size=sprite_size, holdable=False)
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic=False, sprite_size=None):
+        super().__init__(position, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size=sprite_size, holdable=False)
         self.energy = energy
         self.speed = speed
         self.current_direction = 'down'
@@ -465,8 +465,8 @@ class Actor(Entity):
 
 # NPC class
 class NPC(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size=None):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
+    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic=False, sprite_size=None):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
         self.happiness = 50
         self.fullness = 50
         self.bored = 50
@@ -523,13 +523,13 @@ class NPC(Actor):
     
 # PLAYER class
 class Player(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), sprite_size=None):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, sprite_size)
+    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=True, sprite_size=None):
+        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
 
 
 
 # Player setup
-player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), sprite_size=128)
+player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', is_dynamic=True, sprite_size=128)
 player.is_dynamic = True
 sprite_sheet = pygame.image.load('sprite_player2_128.png')  # Update with the path to your sprite sheet
 player.sprite = {
@@ -544,8 +544,7 @@ player.sprite = {
 }
 
 # cat setup
-cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
-cat.is_dynamic = True
+cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
 sprite_sheet = pygame.image.load('sprite_cat2_64.png')  # Update with the path to your sprite sheet
 cat.sprite = {
     'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
@@ -559,8 +558,7 @@ cat.sprite = {
 }
 
 # cat2 setup
-cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
-cat2.is_dynamic = True
+cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
 cat2.sprite = {
     'down': [cat2.get_sprite(3, 0), cat2.get_sprite(4, 0), cat2.get_sprite(5, 0)],
     'left': [cat2.get_sprite(3, 1), cat2.get_sprite(4, 1), cat2.get_sprite(5, 1)],
@@ -573,8 +571,7 @@ cat2.sprite = {
 }
 
 # cat3 setup
-cat3 = NPC(position=[1550, 730], energy=20, speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
-cat3.is_dynamic = True
+cat3 = NPC(position=[1550, 730], energy=20, speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
 cat3.sprite = {
     'down': [cat3.get_sprite(6, 0), cat3.get_sprite(7, 0), cat3.get_sprite(8, 0)],
     'left': [cat3.get_sprite(6, 1), cat3.get_sprite(7, 1), cat3.get_sprite(8, 1)],
@@ -587,8 +584,7 @@ cat3.sprite = {
 }
 
 # cat4 setup
-cat4 = NPC(position=[1550, 700], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), sprite_size=64)
-cat4.is_dynamic = True
+cat4 = NPC(position=[1550, 700], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', is_dynamic=True, sprite_size=64)
 cat4.sprite = {
     'down': [cat4.get_sprite(9, 0), cat4.get_sprite(10, 0), cat4.get_sprite(11, 0)],
     'left': [cat4.get_sprite(9, 1), cat4.get_sprite(10, 1), cat4.get_sprite(11, 1)],
