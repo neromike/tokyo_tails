@@ -497,10 +497,10 @@ class NPC(Actor):
         if self.task == 'find-food':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
-            if item_cat_food.held:
+            if item_cat_food_bowl.held:
                 food_position = pixel_to_grid(player.collision_center())
             else:
-                food_position = pixel_to_grid(item_cat_food.collision_center())
+                food_position = pixel_to_grid(item_cat_food_bowl.collision_center())
 
             # Figure out next step
             next_step = astar(cat_position, food_position)
@@ -644,7 +644,7 @@ npcs.append(cat5)
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'item_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'item_shelf.png')
-item_cat_food = Entity([1000,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
+item_cat_food_bowl = Entity([1000,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'item_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='icon_cat_food_bag.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 
@@ -652,7 +652,7 @@ item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 items = []
 items.append(item_table)
 items.append(item_shelf)
-items.append(item_cat_food)
+items.append(item_cat_food_bowl)
 items.append(item_cat_food_bag)
 items.append(item_bed)
 
