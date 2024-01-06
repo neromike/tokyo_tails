@@ -216,13 +216,14 @@ class Entity:
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
         self.file_name = file_name
-        self.image = None
+        self.sprite_sheet = {}
         self.sprite_size = sprite_size
+        self.sprite = None
         self.collide_rect = None
         self.update_collide_rect()
         if not self.file_name == '':
-            self.image = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.file_name)).convert_alpha()
-            self.sprite_size = self.image.get_width()
+            self.sprite = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.file_name)).convert_alpha()
+            self.sprite_size = self.sprite.get_width()
         self.holdable = holdable
         self.held = False
         self.held_y_offset = held_y_offset
@@ -243,8 +244,6 @@ class Entity:
     def get_z_order(self):
         # Assuming y-coordinate determines depth
         return self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)
-    def set_sprite(self, sprite):
-        self.image = sprite
     def collision_center(self):
         return [self.position[0] + self.collision_rect_offset[0] + (self.collision_rect_size[0] / 2), self.position[1] + self.collision_rect_offset[1] + (self.collision_rect_size[1] / 2)]
     def get_sprite(self, x, y):
@@ -255,7 +254,7 @@ class Entity:
         return image
     def blit(self, camera_offset, screen, override = False):
         if not self.held or override:
-            screen.blit(self.image, (self.position[0]-camera_offset[0], self.position[1]-camera_offset[1]))
+            screen.blit(self.sprite, (self.position[0]-camera_offset[0], self.position[1]-camera_offset[1]))
     def interact(self):
         if self.holdable:
             if add_to_inventory(self):
@@ -271,7 +270,6 @@ class Actor(Entity):
         self.speed = speed
         self.current_direction = 'down'
         self.pose_index = 0
-        self.sprite = {}
         self.is_moving = False
         self.bubble_surface = None
         self.bubble_text = None
@@ -440,7 +438,7 @@ class Actor(Entity):
             print(entity.file_name.replace('.png',''))
 
     def update_held_position(self, object):
-        object.position[0] = self.position[0] + (self.sprite_size // 2) - (object.image.get_width() // 2)
+        object.position[0] = self.position[0] + (self.sprite_size // 2) - (object.sprite.get_width() // 2)
         object.position[1] = self.position[1] - object.collision_rect_size[1] - object.held_y_offset
         object.collide_rect = None
 
@@ -556,7 +554,7 @@ class Player(Actor):
 # Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', sprite_size=128)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))
-player.sprite = {
+player.sprite_sheet = {
     'idle_down': player.get_sprite(0, 0),
     'idle_up': player.get_sprite(0, 1),
     'idle_right': player.get_sprite(0, 2),
@@ -570,7 +568,7 @@ player.sprite = {
 # cat setup
 cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat2_64.png'))
-cat.sprite = {
+cat.sprite_sheet = {
     'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
     'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
     'right': [cat.get_sprite(0, 2), cat.get_sprite(1, 2), cat.get_sprite(2, 2)],
@@ -583,7 +581,7 @@ cat.sprite = {
 
 # cat2 setup
 cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
-cat2.sprite = {
+cat2.sprite_sheet = {
     'down': [cat2.get_sprite(3, 0), cat2.get_sprite(4, 0), cat2.get_sprite(5, 0)],
     'left': [cat2.get_sprite(3, 1), cat2.get_sprite(4, 1), cat2.get_sprite(5, 1)],
     'right': [cat2.get_sprite(3, 2), cat2.get_sprite(4, 2), cat2.get_sprite(5, 2)],
@@ -596,7 +594,7 @@ cat2.sprite = {
 
 # cat3 setup
 cat3 = NPC(position=[1550, 730], energy=20, speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
-cat3.sprite = {
+cat3.sprite_sheet = {
     'down': [cat3.get_sprite(6, 0), cat3.get_sprite(7, 0), cat3.get_sprite(8, 0)],
     'left': [cat3.get_sprite(6, 1), cat3.get_sprite(7, 1), cat3.get_sprite(8, 1)],
     'right': [cat3.get_sprite(6, 2), cat3.get_sprite(7, 2), cat3.get_sprite(8, 2)],
@@ -609,7 +607,7 @@ cat3.sprite = {
 
 # cat4 setup
 cat4 = NPC(position=[1550, 700], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
-cat4.sprite = {
+cat4.sprite_sheet = {
     'down': [cat4.get_sprite(9, 0), cat4.get_sprite(10, 0), cat4.get_sprite(11, 0)],
     'left': [cat4.get_sprite(9, 1), cat4.get_sprite(10, 1), cat4.get_sprite(11, 1)],
     'right': [cat4.get_sprite(9, 2), cat4.get_sprite(10, 2), cat4.get_sprite(11, 2)],
@@ -623,7 +621,7 @@ cat4.sprite = {
 # cat5 setup
 cat5 = NPC(position=[1200, 500], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat_fluffy.png'))
-cat5.sprite = {
+cat5.sprite_sheet = {
     'down': [cat5.get_sprite(0, 0), cat5.get_sprite(1, 0), cat5.get_sprite(2, 0)],
     'left': [cat5.get_sprite(0, 1), cat5.get_sprite(1, 1), cat5.get_sprite(2, 1)],
     'right': [cat5.get_sprite(0, 2), cat5.get_sprite(1, 2), cat5.get_sprite(2, 2)],
@@ -843,10 +841,10 @@ while running:
     # Update player game object sprite and position
     if player.is_moving:
         player.pose_index = (player.pose_index + 1) % 17
-        sprite_to_draw = player.sprite[player.current_direction][round(player.pose_index / 3)]
+        sprite_to_draw = player.sprite_sheet[player.current_direction][round(player.pose_index / 3)]
     else:
-        sprite_to_draw = player.sprite[f'idle_{player.current_direction}']
-    player.set_sprite(sprite_to_draw)
+        sprite_to_draw = player.sprite_sheet[f'idle_{player.current_direction}']
+    player.sprite = sprite_to_draw
 
     # Update the player bubble
     player.update_bubble()
@@ -860,10 +858,10 @@ while running:
     for npc in npcs:
         if npc.is_moving:
             npc.pose_index = (npc.pose_index + 1) % 8
-            sprite_to_draw = npc.sprite[npc.current_direction][round(npc.pose_index / 3)]
+            sprite_to_draw = npc.sprite_sheet[npc.current_direction][round(npc.pose_index / 3)]
         else:
-            sprite_to_draw = npc.sprite[f'idle_{npc.current_direction}']
-        npc.set_sprite(sprite_to_draw)
+            sprite_to_draw = npc.sprite_sheet[f'idle_{npc.current_direction}']
+        npc.sprite = sprite_to_draw
 
     # Calculate camera offset based on player position
     camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
