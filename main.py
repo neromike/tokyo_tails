@@ -10,10 +10,6 @@ clock = pygame.time.Clock()
 
 
 
-
-
-
-
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
 MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
@@ -213,7 +209,6 @@ def astar(start, end):
 
 # ENTITY class
 class Entity:
-
     entities = []
 
     def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', sprite_size=None, holdable=False, held_y_offset=0, icon_file_name=''):
@@ -560,7 +555,7 @@ class Player(Actor):
 
 # Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', sprite_size=128)
-sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))
 player.sprite = {
     'idle_down': player.get_sprite(0, 0),
     'idle_up': player.get_sprite(0, 1),
@@ -574,7 +569,7 @@ player.sprite = {
 
 # cat setup
 cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
-sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat2_64.png'))  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat2_64.png'))
 cat.sprite = {
     'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
     'left': [cat.get_sprite(0, 1), cat.get_sprite(1, 1), cat.get_sprite(2, 1)],
@@ -627,7 +622,7 @@ cat4.sprite = {
 
 # cat5 setup
 cat5 = NPC(position=[1200, 500], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
-sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat_fluffy.png'))  # Update with the path to your sprite sheet
+sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat_fluffy.png'))
 cat5.sprite = {
     'down': [cat5.get_sprite(0, 0), cat5.get_sprite(1, 0), cat5.get_sprite(2, 0)],
     'left': [cat5.get_sprite(0, 1), cat5.get_sprite(1, 1), cat5.get_sprite(2, 1)],
@@ -742,7 +737,6 @@ def check_interaction(object1, object2, inflation=20):
 background_layer = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_cafe3.png')).convert_alpha()
 background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
-
 bubble = {
     "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'emoji_heart.png')).convert_alpha(),
 }
