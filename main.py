@@ -468,6 +468,7 @@ class NPC(Actor):
         #self.task="find-food"
         #ddself.fullness = 0
         #print(self.task)
+
         # Update the activity change timer
         self.time_since_last_activity_change += 1
         
@@ -497,8 +498,9 @@ class NPC(Actor):
                 item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['empty']
 
         # Check for hunger
-        if self.fullness <= 20:
+        if self.fullness <= 20 and self.task not in ('find-food', 'eat'):
             self.task = 'find-food'
+            self.show_bubble(image=bubble['hunger'])
 
         if self.task == 'find-food':
             # Get start and end positions
@@ -544,7 +546,7 @@ class NPC(Actor):
         if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
             self.time_since_last_activity_change = 0
             self.task = random.choice(CAT_ACTIVITIES)
-            print(f'new activity:{self.task}')
+            #print(f'new activity:{self.task}')
 
     def interact(self):
         player.show_bubble(image=bubble['heart'])
@@ -748,6 +750,7 @@ background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'backgr
 BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
 bubble = {
     "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'emoji_heart.png')).convert_alpha(),
+    "hunger": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'emoji_hunger.png')).convert_alpha(),
 }
 room_obstacles = []
 room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(370,330)) )      # top-left
@@ -899,6 +902,13 @@ while running:
         # Adjust bubble_position as needed to position it above the actor
         bubble_position = (player.position[0] - camera_offset[0], player.position[1] - 60 - camera_offset[1])
         screen.blit(player.bubble_surface, bubble_position)
+    
+    # Draw NPC bubbles
+    for npc in npcs:
+        if npc.bubble_visible and npc.bubble_surface:
+            # Adjust bubble_position as needed to position it above the actor
+            bubble_position = (npc.position[0] - camera_offset[0], npc.position[1] - 60 - camera_offset[1])
+            screen.blit(npc.bubble_surface, bubble_position)
 
     # Draw the grid
     #draw_grid()
