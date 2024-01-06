@@ -461,11 +461,13 @@ class NPC(Actor):
         self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
         self.direction = 0
         self.task = ''
-        self.destination = []
+        self.path = None
+        self.destination = ()
+        self.currently_exploring = False
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
-        print(item_cat_food_bowl.energy)
+        #print(item_cat_food_bowl.energy)
         self.show_bubble(text=self.task)
 
         # Update the activity change timer
@@ -473,10 +475,10 @@ class NPC(Actor):
         
         # Digest food
         self.fullness -= self.digest_speed
+        #self.task = 'explore'
 
-        # Eat food
+        # --- EAT ---
         if self.task == 'eat':
-            #print('EAT')
             # Check if there is a food bowl nearby
             if self.check_collision(item_cat_food_bowl, proximity=40):
                 
@@ -507,26 +509,30 @@ class NPC(Actor):
             self.task = 'find-food'
             self.show_bubble(image=bubble['hunger'])
 
+        # --- FIND-FOOD ---
         if self.task == 'find-food':
+            
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
+            
+            # Get the end position
             if item_cat_food_bowl.held:
                 food_position = pixel_to_grid(player.collision_center())
             else:
                 food_position = pixel_to_grid(item_cat_food_bowl.collision_center())
 
-            # Figure out next step
-            next_step = astar(cat_position, food_position)
-            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} next_step:{next_step}')
-            if next_step is not None:
-                if len(next_step) > 1:
-                    next_step = next_step[1]
-                else:
-                    next_step = cat_position
-                    self.task = 'eat'
+            # Find a path to the cat food bowl if the NPC doesn't currently have one
+            self.path = astar(cat_position, food_position)
             
-                # Move the cat if it's not next to the correct position
-                if next_step != cat_position:
+            # DEBUG
+            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} self.path:{self.path}')
+
+            # Move towards the next step
+            if self.path is not None:
+                if len(self.path) > 1:
+                    next_step = self.path[1]
+
+                    # Move the cat if it's not next to the correct position
                     if next_step[0] < cat_position[0]:
                         if next_step[1] < cat_position[1]:
                             self.move(135, self.speed)
@@ -546,6 +552,73 @@ class NPC(Actor):
                             self.move(0, self.speed)
                         else:
                             self.move(315, self.speed)
+                else:
+                    next_step = cat_position
+                    self.task = 'eat'
+                    self.path = None
+                    self.is_moving = False
+        
+        # --- EXPLORE ---
+        if self.task == 'explore*':
+            # Get start and end positions
+            cat_position = pixel_to_grid(self.collision_center())
+            
+            # Find a new path if not currently exploring
+            if not self.currently_exploring:
+                while self.path is None:
+                
+                    # Get the end position
+                    end_position = random.randint(5, grid_width-5), random.randint(5, grid_height-5)
+
+                    # Find a path to the end_position
+                    self.path = astar(cat_position, end_position)
+
+                # The NPC is now exploring
+                self.currently_exploring = True
+
+                    #print(f'cat_position:{cat_position} end_position:{end_position} self.path:{self.path}')
+                self.destination = end_position
+            else:
+                # Update the path to the end_position
+                self.path = astar(cat_position, self.destination)
+
+            if self.path is None:
+                self.task = ''
+                self.path = None
+                self.currently_exploring = False
+                self.is_moving = False
+            else:
+                if len(self.path) > 1:
+                    next_step = self.path[1]
+                    #print(f'cat_position:{cat_position} next_step:{next_step} self.path:{self.path}')
+
+                    # Move the cat if it's not next to the correct position
+                    if next_step[0] < cat_position[0]:
+                        if next_step[1] < cat_position[1]:
+                            self.move(135, self.speed)
+                        elif next_step[1] == cat_position[1]:
+                            self.move(180, self.speed)
+                        else:
+                            self.move(225, self.speed)
+                    elif next_step[0] == cat_position[0]:
+                        if next_step[1] < cat_position[1]:
+                            self.move(90, self.speed)
+                        elif next_step[1] > cat_position[1]:
+                            self.move(270, self.speed)
+                    else:
+                        if next_step[1] < cat_position[1]:
+                            self.move(45, self.speed)
+                        elif next_step[1] == cat_position[1]:
+                            self.move(0, self.speed)
+                        else:
+                            self.move(315, self.speed)
+                else:
+                    next_step = cat_position
+                    self.task = ''
+                    self.path = None
+                    self.currently_exploring = False
+                    self.is_moving = False
+
 
         # Choose a new random activity after some time if not currently doing anything else
         if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
