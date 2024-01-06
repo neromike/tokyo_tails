@@ -106,6 +106,24 @@ def print_grid(start=None, end=None, marked_positions=None):
             else:
                 row_string += 'X  ' if cell else '.  '  # Obstacle or Empty
         print(row_string)
+def initialize_connectivity_grid():
+    connectivity_grid = [[[] for _ in range(grid_width)] for _ in range(grid_height)]
+    return connectivity_grid
+def populate_connectivity_grid():
+    # Reset the connectivity grid
+    connectivity_grid = initialize_connectivity_grid()
+    for y in range(grid_height):
+        for x in range(grid_width):
+            if not grid[y][x]:  # If the current cell is passable
+                for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:  # Adjacent cells
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < grid_width and 0 <= ny < grid_height and not grid[ny][nx]:
+                        connectivity_grid[y][x].append((nx, ny))
+    return connectivity_grid
+def is_path_possible(start, end):
+    # If either the start or end cells have no connections, a path is not possible
+    return bool(connectivity_grid[start[1]][start[0]]) and bool(connectivity_grid[end[1]][end[0]])
+
 
 
 class Node():
@@ -559,19 +577,20 @@ class NPC(Actor):
                     self.is_moving = False
         
         # --- EXPLORE ---
-        if self.task == 'explore*':
+        if self.task == 'explore':
             # Get start and end positions
             cat_position = pixel_to_grid(self.collision_center())
             
             # Find a new path if not currently exploring
             if not self.currently_exploring:
                 while self.path is None:
-                
+
                     # Get the end position
                     end_position = random.randint(5, grid_width-5), random.randint(5, grid_height-5)
 
-                    # Find a path to the end_position
-                    self.path = astar(cat_position, end_position)
+                    # Find a path to the end_position if it's possible to this end position
+                    if is_path_possible(cat_position, end_position):
+                        self.path = astar(cat_position, end_position)
 
                 # The NPC is now exploring
                 self.currently_exploring = True
@@ -848,6 +867,7 @@ current_day = None
 current_time = None
 camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_WIDTH - SCREEN_WIDTH)), max(0, min(player.position[1] - SCREEN_HEIGHT // 2, BACKGROUND_HEIGHT - SCREEN_HEIGHT))]
 grid = mark_obstacles_on_grid()
+connectivity_grid = populate_connectivity_grid()
 while running:
 
     # Calculate elapsed time
