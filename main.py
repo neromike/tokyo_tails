@@ -465,9 +465,8 @@ class NPC(Actor):
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
-        #self.task="find-food"
-        #ddself.fullness = 0
-        #print(self.task)
+        print(item_cat_food_bowl.energy)
+        self.show_bubble(text=self.task)
 
         # Update the activity change timer
         self.time_since_last_activity_change += 1
@@ -479,23 +478,29 @@ class NPC(Actor):
         if self.task == 'eat':
             #print('EAT')
             # Check if there is a food bowl nearby
-            #if self.check_collision_with_obstacles(item_cat_food_bowl)[0]:
+            if self.check_collision(item_cat_food_bowl, proximity=40):
+                
+                # Can only eat if the bowl has food
+                if item_cat_food_bowl.energy > 0:
 
-            # Eat the food
-            self.fullness += 5
+                    # Eat the food
+                    self.fullness += 5
 
-            # The cat gets more full
-            if self.fullness >= 100:
-                self.task = ''
+                    # The cat gets more full
+                    if self.fullness >= 100:
+                        self.task = ''
 
-            # The bowl gets less full
-            item_cat_food_bowl.energy -= 1
-            if item_cat_food_bowl.energy > 70:
-                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['full']
-            elif item_cat_food_bowl.energy > 30:
-                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['mid']
+                    # The bowl gets less full
+                    item_cat_food_bowl.energy -= 1
+                    if item_cat_food_bowl.energy > 70:
+                        item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['full']
+                    elif item_cat_food_bowl.energy > 30:
+                        item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['mid']
+                    else:
+                        item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['empty']
+
             else:
-                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['empty']
+                self.task = ''
 
         # Check for hunger
         if self.fullness <= 20 and self.task not in ('find-food', 'eat'):
@@ -860,8 +865,10 @@ while running:
         sprite_to_draw = player.sprite_sheet[f'idle_{player.current_direction}']
     player.sprite = sprite_to_draw
 
-    # Update the player bubble
+    # Update the player and NPC bubbles
     player.update_bubble()
+    for npc in npcs:
+        npc.update_bubble()
 
     # Update NPC states
     #print(f'cat1.fullness{cat.fullness} cat2.fullness{cat2.fullness} cat3.fullness{cat3.fullness} cat4.fullness{cat4.fullness}')
