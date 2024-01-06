@@ -206,15 +206,11 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 # Load image assets
 background_layer = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_cafe3.png')).convert_alpha()
-item_images = {
-    "asset_cat_food_bag": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_item_cat_food_bag.png')).convert_alpha(),
-    "asset_cat_food_bowl": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_item_cat_food_bowl.png')).convert_alpha(),
-}
+background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
 bubble = {
     "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_bubble_heart.png')).convert_alpha(),
 }
 
-background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
 
 
 # ENTITY class
@@ -222,7 +218,7 @@ class Entity:
 
     entities = []
 
-    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False, held_y_offset=0, icon = None):
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=False, sprite_size=None, holdable=False, held_y_offset=0, icon_file_name=''):
         self.position = position
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
@@ -238,7 +234,10 @@ class Entity:
         self.holdable = holdable
         self.held = False
         self.held_y_offset = held_y_offset
-        self.icon = icon
+        self.icon = None
+        self.icon_file_name = icon_file_name
+        if not self.icon_file_name == '':
+            self.icon = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.icon_file_name)).convert_alpha()
         self.entities.append(self)
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
@@ -335,14 +334,14 @@ class Actor(Entity):
                 self.nudge_towards_corner(y_collision[1], 'x')
         
         # Exit the room
-                if x_collision[0] == 'exit' or y_collision[0] == 'exit':
-                    global background_layer
-                    global room_obstacles, room_exits
-                    global BACKGROUND_WIDTH, BACKGROUND_HEIGHT
-                    background_layer = background_layer_farm
-                    room_obstacles = []
-                    room_exits = []
-                    BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 2500, 2500
+        if x_collision[0] == 'exit' or y_collision[0] == 'exit':
+            global background_layer
+            global room_obstacles, room_exits
+            global BACKGROUND_WIDTH, BACKGROUND_HEIGHT
+            background_layer = background_layer_farm
+            room_obstacles = []
+            room_exits = []
+            BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 2500, 2500
 
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
@@ -560,7 +559,7 @@ class NPC(Actor):
 class Player(Actor):
     def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', is_dynamic=True, sprite_size=None):
         super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, is_dynamic, sprite_size)
-
+        self.hp = 100
 
 
 # Set up the room
@@ -669,8 +668,8 @@ npcs.append(cat5)
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
-item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food.png', holdable=True, held_y_offset=10, icon=item_images["asset_cat_food_bowl"])
-item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True, held_y_offset=40, icon=item_images["asset_cat_food_bag"])
+item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='asset_item_cat_food_bag.png')
+item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='asset_item_cat_food_bowl.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
 
 # Master list of all items
