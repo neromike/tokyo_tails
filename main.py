@@ -9,6 +9,11 @@ pygame.init()
 clock = pygame.time.Clock()
 
 
+
+
+
+
+
 # Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
 MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
@@ -20,6 +25,13 @@ START_TIME = pygame.time.get_ticks() + INITIAL_TIME_OFFSET
 FONT_SIZE = 20
 IMAGE_ASSET_PATH = 'asset_image'
 SOUND_ASSET_PATH = 'asset_sound'
+
+
+
+# Set up the screen
+pygame.display.set_caption("Tokyo Tails")
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+font = pygame.font.Font(None, FONT_SIZE)
 
 
 
@@ -196,20 +208,6 @@ def astar(start, end):
             
             # Add the child to the open list
             open_list.append(child)
-
-
-
-# Set up the screen
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Tokyo Tails")
-font = pygame.font.Font(None, FONT_SIZE)
-
-# Load image assets
-background_layer = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_cafe3.png')).convert_alpha()
-background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
-bubble = {
-    "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_bubble_heart.png')).convert_alpha(),
-}
 
 
 
@@ -560,19 +558,6 @@ class Player(Actor):
         self.hp = 100
 
 
-# Set up the room
-BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
-room_obstacles = []
-room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(370,330)) )      # top-left
-room_obstacles.append( Entity((450, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,330)) )   # top-right
-room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(80,1080)) )      # left
-room_obstacles.append( Entity((0, 1000), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # bottom
-room_obstacles.append( Entity((2940, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # right
-room_exits = []
-room_exits.append( Entity((330, 0), collision_rect_offset=(0,0), collision_rect_size=(450,310)) )
-
-
-
 # Player setup
 player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', sprite_size=128)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))  # Update with the path to your sprite sheet
@@ -664,11 +649,11 @@ npcs.append(cat5)
 
 
 # Item setup
-item_table = Entity([570,715], [7,50], [157,120], 'asset_table.png')
-item_shelf = Entity([65,760], [7,110], [157,40], 'asset_shelf.png')
-item_cat_food = Entity([1000,500], [8,8], [40,20], 'asset_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='asset_item_cat_food_bowl.png')
-item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'asset_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='asset_item_cat_food_bag.png')
-item_bed = Entity([75,657], [13,19], [100,10], 'asset_bed.png')
+item_table = Entity([570,715], [7,50], [157,120], 'item_table.png')
+item_shelf = Entity([65,760], [7,110], [157,40], 'item_shelf.png')
+item_cat_food = Entity([1000,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
+item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'item_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='icon_cat_food_bag.png')
+item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 
 # Master list of all items
 items = []
@@ -749,6 +734,27 @@ def check_interaction(object1, object2, inflation=20):
         if object1.collide_rect.inflate(inflation,inflation).collidepoint(adjusted_mouse_pos) or object2.collide_rect.inflate(inflation,inflation).collidepoint(adjusted_mouse_pos):
             return True
     return False
+
+
+
+
+# Set up the room
+background_layer = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_cafe3.png')).convert_alpha()
+background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
+BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 3000, 1080
+
+bubble = {
+    "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'emoji_heart.png')).convert_alpha(),
+}
+room_obstacles = []
+room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(370,330)) )      # top-left
+room_obstacles.append( Entity((450, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,330)) )   # top-right
+room_obstacles.append( Entity((0, 0), collision_rect_offset=(0,0), collision_rect_size=(80,1080)) )      # left
+room_obstacles.append( Entity((0, 1000), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # bottom
+room_obstacles.append( Entity((2940, 0), collision_rect_offset=(0,0), collision_rect_size=(3000,1080)) ) # right
+room_exits = []
+room_exits.append( Entity((330, 0), collision_rect_offset=(0,0), collision_rect_size=(450,310)) )
+
 
 
 
