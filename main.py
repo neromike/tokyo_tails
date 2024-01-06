@@ -214,6 +214,9 @@ bubble = {
     "heart": pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'asset_bubble_heart.png')).convert_alpha(),
 }
 
+background_layer_farm = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'background_farm.png')).convert_alpha()
+
+
 # ENTITY class
 class Entity:
 
@@ -330,6 +333,16 @@ class Actor(Entity):
                 self.nudge_towards_corner(x_collision[1], 'y')
             elif y_collision[0]:
                 self.nudge_towards_corner(y_collision[1], 'x')
+        
+        # Exit the room
+                if x_collision[0] == 'exit' or y_collision[0] == 'exit':
+                    global background_layer
+                    global room_obstacles, room_exits
+                    global BACKGROUND_WIDTH, BACKGROUND_HEIGHT
+                    background_layer = background_layer_farm
+                    room_obstacles = []
+                    room_exits = []
+                    BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 2500, 2500
 
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
