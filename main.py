@@ -232,6 +232,7 @@ class Entity:
         if not self.icon_file_name == '':
             self.icon = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.icon_file_name)).convert_alpha()
         self.entities.append(self)
+        self.energy = 100
     def update_collide_rect(self):
         self.collide_rect = pygame.Rect(self.position[0] + self.collision_rect_offset[0], self.position[1] + self.collision_rect_offset[1], self.collision_rect_size[0], self.collision_rect_size[1])
     def check_collision(self, object2, proximity=20, update_first=True):
@@ -264,9 +265,8 @@ class Entity:
 
 # ACTOR class
 class Actor(Entity):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
+    def __init__(self, position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
         super().__init__(position, collision_rect_offset, collision_rect_size, file_name, sprite_size=sprite_size, holdable=False)
-        self.energy = energy
         self.speed = speed
         self.current_direction = 'down'
         self.pose_index = 0
@@ -435,7 +435,7 @@ class Actor(Entity):
         if entity.holdable:
             self.held_entity = entity
             entity.held = True
-            print(entity.file_name.replace('.png',''))
+            #print(entity.file_name.replace('.png',''))
 
     def update_held_position(self, object):
         object.position[0] = self.position[0] + (self.sprite_size // 2) - (object.sprite.get_width() // 2)
@@ -454,8 +454,8 @@ class Actor(Entity):
 # NPC class
 CAT_ACTIVITIES = ['', 'find-food', 'eat', 'find-toy', 'play', 'find-sleep', 'sleep', 'explore']
 class NPC(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
+    def __init__(self, position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
+        super().__init__(position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
         self.happiness = 50
         self.fullness = random.randint(50,90)
         self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
@@ -465,8 +465,8 @@ class NPC(Actor):
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
-        self.task="find-food"
-        self.fullness = 0
+        #self.task="find-food"
+        #ddself.fullness = 0
         #print(self.task)
         # Update the activity change timer
         self.time_since_last_activity_change += 1
@@ -488,7 +488,13 @@ class NPC(Actor):
                 self.task = ''
 
             # The bowl gets less full
-            #item_cat_food_bowl.energy -= 1
+            item_cat_food_bowl.energy -= 1
+            if item_cat_food_bowl.energy > 70:
+                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['full']
+            elif item_cat_food_bowl.energy > 30:
+                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['mid']
+            else:
+                item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['empty']
 
         # Check for hunger
         if self.fullness <= 20:
@@ -546,13 +552,13 @@ class NPC(Actor):
 
 # PLAYER class
 class Player(Actor):
-    def __init__(self, position, energy, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', sprite_size=None):
-        super().__init__(position, energy, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
+    def __init__(self, position, speed, collision_rect_offset=(), collision_rect_size=(), file_name='', sprite_size=None):
+        super().__init__(position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
         self.hp = 100
 
 
 # Player setup
-player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], energy=100, speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', sprite_size=128)
+player = Player(position=[SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2], speed=5, collision_rect_offset=(50,100), collision_rect_size=(40,20), file_name='', sprite_size=128)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_player2_128.png'))
 player.sprite_sheet = {
     'idle_down': player.get_sprite(0, 0),
@@ -566,7 +572,7 @@ player.sprite_sheet = {
 }
 
 # cat setup
-cat = NPC(position=[550, 470], energy=20, speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat = NPC(position=[550, 470], speed=7, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat2_64.png'))
 cat.sprite_sheet = {
     'down': [cat.get_sprite(0, 0), cat.get_sprite(1, 0), cat.get_sprite(2, 0)],
@@ -580,7 +586,7 @@ cat.sprite_sheet = {
 }
 
 # cat2 setup
-cat2 = NPC(position=[1550, 670], energy=20, speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat2 = NPC(position=[1550, 670], speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 cat2.sprite_sheet = {
     'down': [cat2.get_sprite(3, 0), cat2.get_sprite(4, 0), cat2.get_sprite(5, 0)],
     'left': [cat2.get_sprite(3, 1), cat2.get_sprite(4, 1), cat2.get_sprite(5, 1)],
@@ -593,7 +599,7 @@ cat2.sprite_sheet = {
 }
 
 # cat3 setup
-cat3 = NPC(position=[1550, 730], energy=20, speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat3 = NPC(position=[1550, 730], speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 cat3.sprite_sheet = {
     'down': [cat3.get_sprite(6, 0), cat3.get_sprite(7, 0), cat3.get_sprite(8, 0)],
     'left': [cat3.get_sprite(6, 1), cat3.get_sprite(7, 1), cat3.get_sprite(8, 1)],
@@ -606,7 +612,7 @@ cat3.sprite_sheet = {
 }
 
 # cat4 setup
-cat4 = NPC(position=[1550, 700], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat4 = NPC(position=[1550, 700], speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 cat4.sprite_sheet = {
     'down': [cat4.get_sprite(9, 0), cat4.get_sprite(10, 0), cat4.get_sprite(11, 0)],
     'left': [cat4.get_sprite(9, 1), cat4.get_sprite(10, 1), cat4.get_sprite(11, 1)],
@@ -619,7 +625,7 @@ cat4.sprite_sheet = {
 }
 
 # cat5 setup
-cat5 = NPC(position=[1200, 500], energy=20, speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat5 = NPC(position=[1200, 500], speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
 sprite_sheet = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'sprite_cat_fluffy.png'))
 cat5.sprite_sheet = {
     'down': [cat5.get_sprite(0, 0), cat5.get_sprite(1, 0), cat5.get_sprite(2, 0)],
@@ -645,6 +651,11 @@ npcs.append(cat5)
 item_table = Entity([570,715], [7,50], [157,120], 'item_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'item_shelf.png')
 item_cat_food_bowl = Entity([1000,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
+item_cat_food_bowl.sprite_sheet = {
+    'full': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_full.png')),
+    'mid': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_mid.png')),
+    'empty': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_empty.png')),
+}
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'item_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='icon_cat_food_bag.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 
