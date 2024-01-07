@@ -749,7 +749,7 @@ npcs.append(cat5)
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'item_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'item_shelf.png')
-item_cat_food_bowl = Entity([1000,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
+item_cat_food_bowl = Entity([800,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
 item_cat_food_bowl.sprite_sheet = {
     'full': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_full.png')),
     'mid': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_mid.png')),
@@ -757,6 +757,7 @@ item_cat_food_bowl.sprite_sheet = {
 }
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'item_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='icon_cat_food_bag.png')
 item_cat_litter_box = Entity([1000,700], [13,37], [67,54], 'item_cat_litter_box.png')
+item_cat_scratcher = Entity([1000,500], [12,39], [58,39], 'item_cat_scratcher.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 
 # Master list of all items
@@ -766,6 +767,7 @@ items.append(item_shelf)
 items.append(item_cat_food_bowl)
 items.append(item_cat_food_bag)
 items.append(item_cat_litter_box)
+items.append(item_cat_scratcher)
 items.append(item_bed)
 
 
