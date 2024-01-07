@@ -746,7 +746,6 @@ class NPC(Actor):
             
             # Find a new path if not currently exploring
             if not self.currently_exploring:
-                print('looking for path')
                 self.path = None
                 while self.path is None:
 
