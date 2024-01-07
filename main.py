@@ -417,9 +417,13 @@ class Actor(Entity):
         self.bubble_image = image
         self.bubble_visible = True
 
-       # Create the bubble surface with transparency
+       # Create the bubble surface
         bubble_width, bubble_height = 80, 30  # adjust size as needed
         self.bubble_surface = pygame.Surface((bubble_width, bubble_height), pygame.SRCALPHA)
+
+         # Set bubble surface alpha for semi-transparency
+        bubble_alpha = 128  # Set this to desired transparency (0-255)
+        self.bubble_surface.set_alpha(bubble_alpha)
 
         # Draw a rounded rectangle for the bubble
         rect = pygame.Rect(0, 0, bubble_width, bubble_height)
