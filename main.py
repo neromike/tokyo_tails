@@ -418,7 +418,7 @@ class Actor(Entity):
         self.bubble_visible = True
 
        # Create the bubble surface with transparency
-        bubble_width, bubble_height = 100, 50  # adjust size as needed
+        bubble_width, bubble_height = 80, 30  # adjust size as needed
         self.bubble_surface = pygame.Surface((bubble_width, bubble_height), pygame.SRCALPHA)
 
         # Draw a rounded rectangle for the bubble
@@ -1251,7 +1251,7 @@ while running:
     for npc in npcs:
         if npc.bubble_visible and npc.bubble_surface:
             # Adjust bubble_position as needed to position it above the actor
-            bubble_position = (npc.position[0] - camera_offset[0], npc.position[1] - 60 - camera_offset[1])
+            bubble_position = (npc.position[0] - camera_offset[0], npc.position[1] - 20 - camera_offset[1])
             screen.blit(npc.bubble_surface, bubble_position)
 
     # DEBUG: Draw the grid
