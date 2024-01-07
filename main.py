@@ -901,12 +901,54 @@ cat5.sprite_sheet = {
     'idle_up': cat5.get_sprite(0, 3)
 }
 
+# cat6 setup
+cat6 = NPC(position=[1200, 550], speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat6.sprite_sheet = {
+    'down': [cat6.get_sprite(3, 0), cat6.get_sprite(4, 0), cat6.get_sprite(5, 0)],
+    'left': [cat6.get_sprite(3, 1), cat6.get_sprite(4, 1), cat6.get_sprite(5, 1)],
+    'right': [cat6.get_sprite(3, 2), cat6.get_sprite(4, 2), cat6.get_sprite(5, 2)],
+    'up': [cat6.get_sprite(3, 3), cat6.get_sprite(4, 3), cat6.get_sprite(5, 3)],
+    'idle_down': cat6.get_sprite(3, 0),
+    'idle_left': cat6.get_sprite(3, 1),
+    'idle_right': cat6.get_sprite(3, 2),
+    'idle_up': cat6.get_sprite(3, 3)
+}
+
+# cat7 setup
+cat7 = NPC(position=[1200, 500], speed=3, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat7.sprite_sheet = {
+    'down': [cat7.get_sprite(6, 0), cat7.get_sprite(7, 0), cat7.get_sprite(8, 0)],
+    'left': [cat7.get_sprite(6, 1), cat7.get_sprite(7, 1), cat7.get_sprite(8, 1)],
+    'right': [cat7.get_sprite(6, 2), cat7.get_sprite(7, 2), cat7.get_sprite(8, 2)],
+    'up': [cat7.get_sprite(6, 3), cat7.get_sprite(7, 3), cat7.get_sprite(8, 3)],
+    'idle_down': cat7.get_sprite(6, 0),
+    'idle_left': cat7.get_sprite(6, 1),
+    'idle_right': cat7.get_sprite(6, 2),
+    'idle_up': cat7.get_sprite(6, 3)
+}
+
+# cat8 setup
+cat8 = NPC(position=[1200, 450], speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat8.sprite_sheet = {
+    'down': [cat8.get_sprite(9, 0), cat8.get_sprite(10, 0), cat8.get_sprite(11, 0)],
+    'left': [cat8.get_sprite(9, 1), cat8.get_sprite(10, 1), cat8.get_sprite(11, 1)],
+    'right': [cat8.get_sprite(9, 2), cat8.get_sprite(10, 2), cat8.get_sprite(11, 2)],
+    'up': [cat8.get_sprite(9, 3), cat8.get_sprite(10, 3), cat8.get_sprite(11, 3)],
+    'idle_down': cat8.get_sprite(9, 0),
+    'idle_left': cat8.get_sprite(9, 1),
+    'idle_right': cat8.get_sprite(9, 2),
+    'idle_up': cat8.get_sprite(9, 3)
+}
+
 npcs = []
 npcs.append(cat)
 npcs.append(cat2)
 npcs.append(cat3)
 npcs.append(cat4)
 npcs.append(cat5)
+npcs.append(cat6)
+npcs.append(cat7)
+npcs.append(cat8)
 
 
 
