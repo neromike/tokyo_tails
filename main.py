@@ -479,7 +479,6 @@ class Actor(Entity):
 
 
 # NPC class
-CAT_MOTIVE_ACTIVITIES = ['', 'find-food', 'find-water', 'find-toy', 'find-sleep', 'find-litter-box', 'explore']
 class NPC(Actor):
     def __init__(self, position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
         super().__init__(position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
@@ -767,7 +766,7 @@ class NPC(Actor):
             if not self.move_along_path(cat_position, new_task=''):
                 self.currently_exploring = False
         
-        # --- CHOSE NEW RANDOM ACTIVITY ---
+        # explore if nothing else is a priority
         if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
             self.time_since_last_activity_change = 0
             self.task = 'explore'
@@ -940,6 +939,32 @@ cat8.sprite_sheet = {
     'idle_up': cat8.get_sprite(9, 3)
 }
 
+# cat9 setup
+cat9 = NPC(position=[1200, 400], speed=4, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat9.sprite_sheet = {
+    'down': [cat9.get_sprite(9, 0), cat9.get_sprite(10, 0), cat9.get_sprite(11, 0)],
+    'left': [cat9.get_sprite(9, 1), cat9.get_sprite(10, 1), cat9.get_sprite(11, 1)],
+    'right': [cat9.get_sprite(9, 2), cat9.get_sprite(10, 2), cat9.get_sprite(11, 2)],
+    'up': [cat9.get_sprite(9, 3), cat9.get_sprite(10, 3), cat9.get_sprite(11, 3)],
+    'idle_down': cat9.get_sprite(9, 0),
+    'idle_left': cat9.get_sprite(9, 1),
+    'idle_right': cat9.get_sprite(9, 2),
+    'idle_up': cat9.get_sprite(9, 3)
+}
+
+# cat10 setup
+cat10 = NPC(position=[1200, 350], speed=5, collision_rect_offset=(17,50), collision_rect_size=(30,17), file_name='', sprite_size=64)
+cat10.sprite_sheet = {
+    'down': [cat10.get_sprite(3, 0), cat10.get_sprite(4, 0), cat10.get_sprite(5, 0)],
+    'left': [cat10.get_sprite(3, 1), cat10.get_sprite(4, 1), cat10.get_sprite(5, 1)],
+    'right': [cat10.get_sprite(3, 2), cat10.get_sprite(4, 2), cat10.get_sprite(5, 2)],
+    'up': [cat10.get_sprite(3, 3), cat10.get_sprite(4, 3), cat10.get_sprite(5, 3)],
+    'idle_down': cat10.get_sprite(3, 0),
+    'idle_left': cat10.get_sprite(3, 1),
+    'idle_right': cat10.get_sprite(3, 2),
+    'idle_up': cat10.get_sprite(3, 3)
+}
+
 npcs = []
 npcs.append(cat)
 npcs.append(cat2)
@@ -949,6 +974,8 @@ npcs.append(cat5)
 npcs.append(cat6)
 npcs.append(cat7)
 npcs.append(cat8)
+npcs.append(cat9)
+npcs.append(cat10)
 
 
 
