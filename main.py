@@ -110,6 +110,8 @@ def initialize_connectivity_grid():
     connectivity_grid = [[[] for _ in range(grid_width)] for _ in range(grid_height)]
     return connectivity_grid
 def populate_connectivity_grid():
+    # Redo the original grid first
+    mark_obstacles_on_grid()
     # Reset the connectivity grid
     connectivity_grid = initialize_connectivity_grid()
     for y in range(grid_height):
@@ -120,7 +122,9 @@ def populate_connectivity_grid():
                     if 0 <= nx < grid_width and 0 <= ny < grid_height and not grid[ny][nx]:
                         connectivity_grid[y][x].append((nx, ny))
     return connectivity_grid
-def is_path_possible(start, end):
+def is_path_possible(start, end, update_first=True):
+    if update_first:
+        connectivity_grid = populate_connectivity_grid()
     # If either the start or end cells have no connections, a path is not possible
     return bool(connectivity_grid[start[1]][start[0]]) and bool(connectivity_grid[end[1]][end[0]])
 
@@ -229,7 +233,7 @@ def astar(start, end):
 class Entity:
     entities = []
 
-    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', sprite_size=None, holdable=False, held_y_offset=0, icon_file_name=''):
+    def __init__(self, position, collision_rect_offset=(), collision_rect_size=(), file_name='', sprite_size=None, holdable=False, held_y_offset=0, icon_file_name='', draggable=False):
         self.position = position
         self.collision_rect_offset = collision_rect_offset
         self.collision_rect_size = collision_rect_size
@@ -247,6 +251,8 @@ class Entity:
         self.held_y_offset = held_y_offset
         self.icon = None
         self.icon_file_name = icon_file_name
+        self.draggable = draggable
+        self.being_dragged = False
         if not self.icon_file_name == '':
             self.icon = pygame.image.load(os.path.join(IMAGE_ASSET_PATH, self.icon_file_name)).convert_alpha()
         self.entities.append(self)
@@ -342,6 +348,8 @@ class Actor(Entity):
         
         # Exit the room
         if x_collision[0] == 'exit' or y_collision[0] == 'exit':
+            pass
+            """
             global background_layer
             global room_obstacles, room_exits
             global BACKGROUND_WIDTH, BACKGROUND_HEIGHT
@@ -349,6 +357,7 @@ class Actor(Entity):
             room_obstacles = []
             room_exits = []
             BACKGROUND_WIDTH, BACKGROUND_HEIGHT = 2500, 2500
+            """
 
     def check_collision_with_obstacles(self, new_rect):
         # Check for collision with each obstacle
@@ -470,13 +479,21 @@ class Actor(Entity):
 
 
 # NPC class
-CAT_ACTIVITIES = ['', 'find-food', 'eat', 'find-toy', 'play', 'find-sleep', 'sleep', 'explore']
+CAT_MOTIVE_ACTIVITIES = ['', 'find-food', 'find-water', 'find-toy', 'find-sleep', 'find-litter-box', 'explore']
 class NPC(Actor):
     def __init__(self, position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size=None):
         super().__init__(position, speed, collision_rect_offset, collision_rect_size, file_name, sprite_size)
-        self.happiness = 50
+        self.happiness = random.randint(30,90)
         self.fullness = random.randint(50,90)
-        self.digest_speed = 80 / (0.5 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
+        self.thirsty = random.randint(10,30)
+        self.digest_speed = random.randint(20,80) / (1 * 1000)  # 80% per 5 minutes = 80 /(5 * 60 * 1000)
+        self.poop = random.randint(10,30)
+        self.poop_generation_rate = random.random()
+        self.pee = random.randint(10,30)
+        self.pee_generation_rate = random.random()
+        self.thirsty_gain_speed = random.randint(20,80) / (1 * 1000)
+        self.energy_drain_speed = random.randint(20,80) / (1 * 1000)
+        self.happiness_drain_speed = random.randint(20,80) / (1 * 1000)
         self.direction = 0
         self.task = ''
         self.path = None
@@ -485,97 +502,243 @@ class NPC(Actor):
         self.time_since_last_activity_change = 0
         self.new_activity_every_x_seconds = random.randint(10,20)
     def update(self):
-        #print(item_cat_food_bowl.energy)
-        self.show_bubble(text=self.task)
-
+        # DEBUG
+        #print(f'doing self.task:{self.task}')
+        if self.task != '':
+            self.show_bubble(text=self.task)
+        #self.task = 'explore'
+        
         # Update the activity change timer
         self.time_since_last_activity_change += 1
-        
-        # Digest food
-        #self.fullness -= self.digest_speed
-        self.task = 'explore'
 
+        # Digest food
+        self.fullness -= self.digest_speed
+
+        # Find food if hungry
+        if self.fullness <= 20 and self.task in ['', 'explore']:
+            self.task = 'find-food'
+            #self.show_bubble(image=bubble['hunger'])
+
+        # Lower the cat energy
+        self.energy -= self.energy_drain_speed
+
+        # Find bed if low on energy
+        if self.energy <= 20 and self.task in ['', 'explore']:
+            self.task = 'find-sleep'
+            #self.show_bubble(image=bubble['tired']
+
+        # Lower happiness
+        self.happiness -= self.happiness_drain_speed
+
+        # Find toy if not happy
+        if self.happiness <= 20 and self.task in ['', 'explore']:
+            self.task = 'find-toy'
+            #self.show_bubble(image=bubble['sad'])
+
+        # Get thirsty
+        self.thirsty += self.thirsty_gain_speed
+
+        # Find water bowl if thirsty
+        if self.thirsty >= 80 and self.task in ['', 'explore']:
+            self.task = 'find-water'
+            #self.show_bubble(image=bubble['thirsty'])
+
+        # Find litter box if need to pee or poop
+        if (self.poop >= 80 or self.pee >= 80) and self.task in ['', 'explore']:
+            self.task = 'find-litter-box'
+            #self.show_bubble(image=bubble['bathroom'])
+        
         # --- EAT ---
         if self.task == 'eat':
+            self.is_moving = False
             # Check if there is a food bowl nearby
             if self.check_collision(item_cat_food_bowl, proximity=40):
-                
                 # Can only eat if the bowl has food
                 if item_cat_food_bowl.energy > 0:
 
                     # Eat the food
-                    self.fullness += 5
+                    self.fullness += 1
 
-                    # The cat gets more full
+                    # Make poop
+                    self.poop += self.poop_generation_rate
+
+                    # Stop eating when full
                     if self.fullness >= 100:
                         self.task = ''
 
                     # The bowl gets less full
-                    item_cat_food_bowl.energy -= 1
+                    #item_cat_food_bowl.energy -= 1
                     if item_cat_food_bowl.energy > 70:
                         item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['full']
                     elif item_cat_food_bowl.energy > 30:
                         item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['mid']
                     else:
                         item_cat_food_bowl.sprite = item_cat_food_bowl.sprite_sheet['empty']
+            else:
+                self.task = ''
+        
+        # --- DRINK ---
+        if self.task == 'drink':
+            self.is_moving = False
+            # Check if there is a water bowl nearby
+            if self.check_collision(item_cat_water_bowl, proximity=40):
+                # Drink
+                self.thirsty -= 1
 
+                # Make pee
+                self.pee += self.pee_generation_rate
+                
+                # Stop drinking when not thirsty
+                if self.thirsty <= 0:
+                    self.task = ''
             else:
                 self.task = ''
 
-        # Check for hunger
-        if self.fullness <= 20 and self.task not in ('find-food', 'eat'):
-            self.task = 'find-food'
-            self.show_bubble(image=bubble['hunger'])
+        # --- BATHROOM ---
+        if self.task == 'bathroom':
+            self.is_moving = False
+            # Check if there is a litter box nearby
+            if self.check_collision(item_cat_litter_box, proximity=40):
+                #Pee
+                self.pee -= 1
+                if self.pee < 0:
+                    self.pee = 0
+
+                #Poop
+                self.poop -= 1
+                if self.poop < 0:
+                    self.poop = 0
+                
+                #Stop using the litter box when done
+                if self.pee <= 0 and self.poop <= 0:
+                    self.task = ''
+            else:
+                self.task = ''
+
+        # --- PLAY ---
+        if self.task == 'play':
+            self.is_moving = False
+            # Check if there is a toy nearby
+            if self.check_collision(item_cat_scratcher, proximity=40):
+                #Play
+                self.happiness += 1
+                
+                #Stop playing when happy
+                if self.happiness >= 100:
+                    self.task = ''
+            else:
+                self.task = ''
+        
+        # --- SLEEP ---
+        if self.task == 'sleep':
+            self.is_moving = False
+            # Check if there is a bed nearby
+            if self.check_collision(item_cat_bed, proximity=40):
+                #Sleep
+                self.energy += 0.5
+                
+                #Stop sleeping when full of energy
+                if self.energy >= 100:
+                    self.task = ''
+            else:
+                self.task = ''
+
+        # --- FIND-LITTER-BOX ---
+        if self.task == 'find-litter-box':
+            new_task = 'bathroom'
+            if self.check_collision(item_cat_litter_box, proximity=40):
+                self.task = new_task
+            else:
+                # Get start and end positions
+                cat_position = pixel_to_grid(self.collision_center())
+                
+                # Get the end position
+                litter_box_position = pixel_to_grid(item_cat_litter_box.collision_center())
+
+                # Find a path to the cat litter box
+                self.path = astar(cat_position, litter_box_position)
+
+                # Move towards the next step
+                self.move_along_path(cat_position, new_task=new_task)
+        
+        # --- FIND-TOY ---
+        if self.task == 'find-toy':
+            new_task = 'play'
+            if self.check_collision(item_cat_scratcher, proximity=40):
+                self.task = new_task
+            else:
+                # Get start and end positions
+                cat_position = pixel_to_grid(self.collision_center())
+                
+                # Get the end position
+                toy_position = pixel_to_grid(item_cat_scratcher.collision_center())
+
+                # Find a path to the cat toy
+                self.path = astar(cat_position, toy_position)
+
+                # Move towards the next step
+                self.move_along_path(cat_position, new_task=new_task)
+
+        # --- FIND-SLEEP ---
+        if self.task == 'find-sleep':
+            new_task = 'sleep'
+            if self.check_collision(item_cat_bed, proximity=40):
+                self.task = new_task
+            else:
+                # Get start and end positions
+                cat_position = pixel_to_grid(self.collision_center())
+                
+                # Get the end position
+                bed_position = pixel_to_grid(item_cat_bed.collision_center())
+
+                # Find a path to the cat toy
+                self.path = astar(cat_position, bed_position)
+
+                # Move towards the next step
+                self.move_along_path(cat_position, new_task=new_task)
 
         # --- FIND-FOOD ---
         if self.task == 'find-food':
-            
-            # Get start and end positions
-            cat_position = pixel_to_grid(self.collision_center())
-            
-            # Get the end position
-            if item_cat_food_bowl.held:
-                food_position = pixel_to_grid(player.collision_center())
+            new_task = 'eat'
+            if self.check_collision(item_cat_food_bowl, proximity=40):
+                self.task = new_task
             else:
-                food_position = pixel_to_grid(item_cat_food_bowl.collision_center())
-
-            # Find a path to the cat food bowl if the NPC doesn't currently have one
-            self.path = astar(cat_position, food_position)
-            
-            # DEBUG
-            #print(f'cat({cat_position[0]}, {cat_position[1]}) food({food_position[0]}, {food_position[1]}) task:{self.task} self.path:{self.path}')
-
-            # Move towards the next step
-            if self.path is not None:
-                if len(self.path) > 1:
-                    next_step = self.path[1]
-
-                    # Move the cat if it's not next to the correct position
-                    if next_step[0] < cat_position[0]:
-                        if next_step[1] < cat_position[1]:
-                            self.move(135, self.speed)
-                        elif next_step[1] == cat_position[1]:
-                            self.move(180, self.speed)
-                        else:
-                            self.move(225, self.speed)
-                    elif next_step[0] == cat_position[0]:
-                        if next_step[1] < cat_position[1]:
-                            self.move(90, self.speed)
-                        elif next_step[1] > cat_position[1]:
-                            self.move(270, self.speed)
-                    else:
-                        if next_step[1] < cat_position[1]:
-                            self.move(45, self.speed)
-                        elif next_step[1] == cat_position[1]:
-                            self.move(0, self.speed)
-                        else:
-                            self.move(315, self.speed)
+                # Get start and end positions
+                cat_position = pixel_to_grid(self.collision_center())
+                
+                # Get the end position
+                if item_cat_food_bowl.held:
+                    food_position = pixel_to_grid(player.collision_center())
                 else:
-                    next_step = cat_position
-                    self.task = 'eat'
-                    self.path = None
-                    self.is_moving = False
-        
+                    food_position = pixel_to_grid(item_cat_food_bowl.collision_center())
+
+                # Find a path to the cat food bowl
+                self.path = astar(cat_position, food_position)
+
+                # Move towards the next step
+                self.move_along_path(cat_position, new_task=new_task)
+
+        # --- FIND-WATER ---
+        if self.task == 'find-water':
+            new_task = 'drink'
+            if self.check_collision(item_cat_water_bowl, proximity=40):
+                self.task = new_task
+            else:
+                # Get start and end positions
+                cat_position = pixel_to_grid(self.collision_center())
+                
+                # Get the end position
+                if item_cat_water_bowl.held:
+                    water_position = pixel_to_grid(player.collision_center())
+                else:
+                    water_position = pixel_to_grid(item_cat_water_bowl.collision_center())
+
+                # Find a path to the cat food bowl
+                self.path = astar(cat_position, water_position)
+
+                # Move towards the next step
+                self.move_along_path(cat_position, new_task=new_task)
+
         # --- EXPLORE ---
         if self.task == 'explore':
             # Get start and end positions
@@ -583,67 +746,69 @@ class NPC(Actor):
             
             # Find a new path if not currently exploring
             if not self.currently_exploring:
+                print('looking for path')
+                self.path = None
                 while self.path is None:
 
                     # Get the end position
-                    end_position = random.randint(5, grid_width-5), random.randint(5, grid_height-5)
+                    end_position = random.randint(0, grid_width-1), random.randint(0, grid_height-1)
 
                     # Find a path to the end_position if it's possible to this end position
                     if is_path_possible(cat_position, end_position):
                         self.path = astar(cat_position, end_position)
-
+                
                 # The NPC is now exploring
                 self.currently_exploring = True
-
-                    #print(f'cat_position:{cat_position} end_position:{end_position} self.path:{self.path}')
                 self.destination = end_position
             else:
                 # Update the path to the end_position
                 self.path = astar(cat_position, self.destination)
 
-            if self.path is None:
-                self.task = ''
-                self.path = None
+            # Move towards the next step
+            if not self.move_along_path(cat_position, new_task=''):
                 self.currently_exploring = False
-                self.is_moving = False
-            else:
-                if len(self.path) > 1:
-                    next_step = self.path[1]
-                    #print(f'cat_position:{cat_position} next_step:{next_step} self.path:{self.path}')
-
-                    # Move the cat if it's not next to the correct position
-                    if next_step[0] < cat_position[0]:
-                        if next_step[1] < cat_position[1]:
-                            self.move(135, self.speed)
-                        elif next_step[1] == cat_position[1]:
-                            self.move(180, self.speed)
-                        else:
-                            self.move(225, self.speed)
-                    elif next_step[0] == cat_position[0]:
-                        if next_step[1] < cat_position[1]:
-                            self.move(90, self.speed)
-                        elif next_step[1] > cat_position[1]:
-                            self.move(270, self.speed)
-                    else:
-                        if next_step[1] < cat_position[1]:
-                            self.move(45, self.speed)
-                        elif next_step[1] == cat_position[1]:
-                            self.move(0, self.speed)
-                        else:
-                            self.move(315, self.speed)
-                else:
-                    next_step = cat_position
-                    self.task = ''
-                    self.path = None
-                    self.currently_exploring = False
-                    self.is_moving = False
-
-
-        # Choose a new random activity after some time if not currently doing anything else
+        
+        # --- CHOSE NEW RANDOM ACTIVITY ---
         if self.task == '' and (self.time_since_last_activity_change * clock.get_fps()) >= self.new_activity_every_x_seconds:
             self.time_since_last_activity_change = 0
-            self.task = random.choice(CAT_ACTIVITIES)
-            #print(f'new activity:{self.task}')
+            self.task = 'explore'
+        
+    
+    def move_along_path(self, curr_pos, new_task=''):
+        if self.path is not None:
+            if len(self.path) > 1:
+                next_step = self.path[1]
+
+                # DEBUG
+                #print(f'curr_pos:{curr_pos} next_step:{next_step} self.path:{self.path}')
+
+                # Move the NPC if it's not next to the correct position
+                if next_step[0] < curr_pos[0]:
+                    if next_step[1] < curr_pos[1]:
+                        self.move(135, self.speed)
+                    elif next_step[1] == curr_pos[1]:
+                        self.move(180, self.speed)
+                    else:
+                        self.move(225, self.speed)
+                elif next_step[0] == curr_pos[0]:
+                    if next_step[1] < curr_pos[1]:
+                        self.move(90, self.speed)
+                    elif next_step[1] > curr_pos[1]:
+                        self.move(270, self.speed)
+                else:
+                    if next_step[1] < curr_pos[1]:
+                        self.move(45, self.speed)
+                    elif next_step[1] == curr_pos[1]:
+                        self.move(0, self.speed)
+                    else:
+                        self.move(315, self.speed)
+            else:
+                next_step = curr_pos
+                self.task = new_task
+                self.path = None
+                self.is_moving = False
+                return False
+        return True
 
     def interact(self):
         player.show_bubble(image=bubble['heart'])
@@ -749,25 +914,31 @@ npcs.append(cat5)
 # Item setup
 item_table = Entity([570,715], [7,50], [157,120], 'item_table.png')
 item_shelf = Entity([65,760], [7,110], [157,40], 'item_shelf.png')
-item_cat_food_bowl = Entity([800,500], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
+item_computer_desk = Entity([1300,250], [15,60], [120,55], 'item_computer_desk.png')
+item_cat_food_bowl = Entity([1300,450], [8,8], [40,20], 'item_cat_food_bowl_full.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_food_bowl.png')
 item_cat_food_bowl.sprite_sheet = {
     'full': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_full.png')),
     'mid': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_mid.png')),
     'empty': pygame.image.load(os.path.join(IMAGE_ASSET_PATH, 'item_cat_food_bowl_empty.png')),
 }
+item_cat_water_bowl = Entity([1300,650], [8,8], [40,20], 'item_cat_water_bowl.png', holdable=True, held_y_offset=10, icon_file_name='icon_cat_water_bowl.png')
 item_cat_food_bag = Entity([1200,700], [5,50], [44,14], 'item_cat_food_bag.png', holdable=True, held_y_offset=40, icon_file_name='icon_cat_food_bag.png')
-item_cat_litter_box = Entity([1000,700], [13,37], [67,54], 'item_cat_litter_box.png')
+item_cat_litter_box = Entity([1000,700], [13,37], [67,54], 'item_cat_litter_box.png', draggable=True)
 item_cat_scratcher = Entity([1000,500], [12,39], [58,39], 'item_cat_scratcher.png')
+item_cat_bed = Entity([900,400], [17,14], [67,43], 'item_cat_bed.png')
 item_bed = Entity([75,657], [13,19], [100,10], 'item_bed.png')
 
 # Master list of all items
 items = []
 items.append(item_table)
 items.append(item_shelf)
+items.append(item_computer_desk)
 items.append(item_cat_food_bowl)
+items.append(item_cat_water_bowl)
 items.append(item_cat_food_bag)
 items.append(item_cat_litter_box)
 items.append(item_cat_scratcher)
+items.append(item_cat_bed)
 items.append(item_bed)
 
 
@@ -931,6 +1102,7 @@ while running:
                 active_slot_index += 1
                 if active_slot_index >= INV_NUM:
                     active_slot_index = 0
+
     # Handle movement through event handling
     keys = pygame.key.get_pressed()
     player.is_moving = False
@@ -1014,7 +1186,7 @@ while running:
             bubble_position = (npc.position[0] - camera_offset[0], npc.position[1] - 60 - camera_offset[1])
             screen.blit(npc.bubble_surface, bubble_position)
 
-    # Draw the grid
+    # DEBUG: Draw the grid
     #draw_grid()
 
     # Draw the player coordinates
