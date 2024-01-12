@@ -4,6 +4,7 @@ import sys
 import math
 import random
 import time
+import heapq
 
 # Initialize Pygame
 pygame.init()
@@ -141,6 +142,12 @@ class Node():
         self.f = 0
     def __eq__(self, other):
         return self.position == other.position
+    def __lt__(self, other):
+        return self.f < other.f
+    def __gt__(self, other):
+        return self.f > other.f
+    def __hash__(self):
+        return hash(self.position)
 astar_times = []
 def astar(start, end):
     global astar_times
@@ -155,16 +162,17 @@ def astar(start, end):
 
     # Initialize both open and closed list
     open_list = []
-    closed_list = []
+    closed_list = set()
 
     # Add the start node
-    open_list.append(start_node)
+    heapq.heappush(open_list, (start_node.f, start_node))
 
     # Loop until you find the end
     while len(open_list) > 0:
-
         # Get the current node
-        current_node = open_list[0]
+        current_node = heapq.heappop(open_list)[1]
+
+        """
         current_index = 0
         for index, item in enumerate(open_list):
             if item.f < current_node.f:
@@ -174,6 +182,7 @@ def astar(start, end):
         # Pop current index off of the open list, and add it to the closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
+        """
 
         # Found the goal
         if current_node == end_node:
@@ -185,6 +194,8 @@ def astar(start, end):
             timer_end = time.time()
             astar_times.append(timer_end - timer_start)
             return path[::-1] # Return reversed path
+
+        closed_list.add(current_node)
 
         # Generate children
         children = []
@@ -214,24 +225,24 @@ def astar(start, end):
 
         # Loop through children
         for child in children:
-
-            # Child is on the closed list
+            # Skip if child is in the closed list
             if child in closed_list:
                 continue
-            
-            # Create the f, g, and h values
+
+            # Child is already in the open list
+            in_open_list = False
+            for open_node in open_list:
+                if open_node[1] == child:
+                    in_open_list = True
+                    break
+
             child.g = current_node.g + 1
             child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
             child.f = child.g + child.h
 
-            # Child is already in the open list
-            if child in open_list:
-                index = open_list.index(child)
-                if child.h > open_list[index].g:
-                    continue
-            
-            # Add the child to the open list
-            open_list.append(child)
+            # If child node is not in open list or needs an update
+            if not in_open_list or child.f < open_node[1].f:
+                heapq.heappush(open_list, (child.f, child))
     
 
 
