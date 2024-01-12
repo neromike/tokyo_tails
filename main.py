@@ -3,6 +3,7 @@ import os
 import sys
 import math
 import random
+import time
 
 # Initialize Pygame
 pygame.init()
@@ -140,7 +141,10 @@ class Node():
         self.f = 0
     def __eq__(self, other):
         return self.position == other.position
+astar_times = []
 def astar(start, end):
+    global astar_times
+    timer_start = time.time()
     # Returns a list of tuples as a path from the given start to the given end in the given maze
 
     # Create start and end node
@@ -167,7 +171,7 @@ def astar(start, end):
                 current_node = item
                 current_index = index
 
-        # Pop current off open list, add to closed list
+        # Pop current index off of the open list, and add it to the closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
 
@@ -178,6 +182,8 @@ def astar(start, end):
             while current is not None:
                 path.append(current.position)
                 current = current.parent
+            timer_end = time.time()
+            astar_times.append(timer_end - timer_start)
             return path[::-1] # Return reversed path
 
         # Generate children
@@ -226,7 +232,7 @@ def astar(start, end):
             
             # Add the child to the open list
             open_list.append(child)
-
+    
 
 
 # ENTITY class
@@ -508,7 +514,8 @@ class NPC(Actor):
         # DEBUG
         #print(f'doing self.task:{self.task}')
         if self.task != '':
-            self.show_bubble(text=self.task)
+            #self.show_bubble(text=self.task)
+            pass
         #self.task = 'explore'
         
         # Update the activity change timer
@@ -1116,7 +1123,7 @@ camera_offset = [max(0, min(player.position[0] - SCREEN_WIDTH // 2, BACKGROUND_W
 grid = mark_obstacles_on_grid()
 connectivity_grid = populate_connectivity_grid()
 while running:
-
+    #print(astar_times)
     # Calculate elapsed time
     elapsed_time = pygame.time.get_ticks() - START_TIME
     current_day = (elapsed_time // MILLISECONDS_PER_DAY) + 1
@@ -1197,6 +1204,8 @@ while running:
         player.move(270, player.speed)
     elif keys[pygame.K_ESCAPE]:
         running = False
+    elif keys[pygame.K_p]:
+        print(f'mean:{sum(astar_times) / len(astar_times)} total:{sum(astar_times)}')
 
     # Update player game object sprite and position
     if player.is_moving:
