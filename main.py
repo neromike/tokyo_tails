@@ -34,10 +34,10 @@ font = pygame.font.Font(None, FONT_SIZE)
 
 
 # Load and play background music
-pygame.mixer.init()
-pygame.mixer.music.load(os.path.join(SOUND_ASSET_PATH, '1243769_Loneliness-Corrupts-Me-Lof.mp3'))
-pygame.mixer.music.set_volume(1.0)  # Set the volume to full
-pygame.mixer.music.play()  # The -1 makes the music loop indefinitely
+#pygame.mixer.init()
+#pygame.mixer.music.load(os.path.join(SOUND_ASSET_PATH, '1243769_Loneliness-Corrupts-Me-Lof.mp3'))
+#pygame.mixer.music.set_volume(1.0)  # Set the volume to full
+#pygame.mixer.music.play()  # The -1 makes the music loop indefinitely
 
 
 
@@ -172,17 +172,9 @@ def astar(start, end):
         # Get the current node
         current_node = heapq.heappop(open_list)[1]
 
-        """
-        current_index = 0
-        for index, item in enumerate(open_list):
-            if item.f < current_node.f:
-                current_node = item
-                current_index = index
-
-        # Pop current index off of the open list, and add it to the closed list
-        open_list.pop(current_index)
-        closed_list.append(current_node)
-        """
+        # Skip processing if this node is outdated
+        if current_node in closed_list:
+            continue
 
         # Found the goal
         if current_node == end_node:
@@ -229,20 +221,13 @@ def astar(start, end):
             if child in closed_list:
                 continue
 
-            # Child is already in the open list
-            in_open_list = False
-            for open_node in open_list:
-                if open_node[1] == child:
-                    in_open_list = True
-                    break
-
             child.g = current_node.g + 1
-            child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+            child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2) #Squared Euclidean
+            #child.h = abs(child.position[0] - end_node.position[0]) + abs(child.position[1] - end_node.position[1])    #Manhattan
             child.f = child.g + child.h
 
-            # If child node is not in open list or needs an update
-            if not in_open_list or child.f < open_node[1].f:
-                heapq.heappush(open_list, (child.f, child))
+            # Add to open list without updating existing entries (Lazy Updating)
+            heapq.heappush(open_list, (child.f, child))
     
 
 
