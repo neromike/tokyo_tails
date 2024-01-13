@@ -3,7 +3,6 @@ import os
 import sys
 import math
 import random
-import time
 import heapq
 
 # Initialize Pygame
@@ -148,10 +147,7 @@ class Node():
         return self.f > other.f
     def __hash__(self):
         return hash(self.position)
-astar_times = []
 def astar(start, end):
-    global astar_times
-    timer_start = time.time()
     # Returns a list of tuples as a path from the given start to the given end in the given maze
 
     # Create start and end node
@@ -183,8 +179,6 @@ def astar(start, end):
             while current is not None:
                 path.append(current.position)
                 current = current.parent
-            timer_end = time.time()
-            astar_times.append(timer_end - timer_start)
             return path[::-1] # Return reversed path
 
         closed_list.add(current_node)
@@ -1200,8 +1194,6 @@ while running:
         player.move(270, player.speed)
     elif keys[pygame.K_ESCAPE]:
         running = False
-    elif keys[pygame.K_p]:
-        print(f'mean:{sum(astar_times) / len(astar_times)} total:{sum(astar_times)}')
 
     # Update player game object sprite and position
     if player.is_moving:
