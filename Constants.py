@@ -1,0 +1,12 @@
+import pygame
+# Constants
+SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
+MILLISECONDS_PER_DAY = 720000  # 12 minutes in milliseconds
+MILLISECONDS_PER_HOUR = MILLISECONDS_PER_DAY / 24
+START_HOUR = 8  # Start time (hour)
+START_MINUTE = 0  # Start time (minute)
+INITIAL_TIME_OFFSET = (START_HOUR * 60 + START_MINUTE) * (MILLISECONDS_PER_HOUR / 60)
+START_TIME = pygame.time.get_ticks() + INITIAL_TIME_OFFSET
+FONT_SIZE = 20
+IMAGE_ASSET_PATH = 'asset_image'
+SOUND_ASSET_PATH = 'asset_sound'
