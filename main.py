@@ -320,6 +320,9 @@ class Actor(Entity):
         dx = distance * math.cos(radians)
         dy = -distance * math.sin(radians)  # Invert y-axis for Pygame
 
+
+        # Note sometimes this doesn't work and records collisions when there are none doesn't seem to break anything tho
+
         # Check for X-axis collision
         x_collision = self.check_collision_with_obstacles(self.real_rect(self.position[0] + dx, self.position[1]))
         if not x_collision[0]:
@@ -379,14 +382,13 @@ class Actor(Entity):
         ]
         nearest_corner = min(corners, key=lambda corner: self.distance_to_corner(corner))
         nudge_amount = 3  # Adjust this value as needed
-
         if axis == 'x':
-            if nearest_corner[0] > self.position[0]:
+            if corners.index(nearest_corner) % 2 == 0:
                 self.position[0] -= nudge_amount
             else:
                 self.position[0] += nudge_amount
         elif axis == 'y':
-            if nearest_corner[1] > self.position[1]:
+            if corners.index(nearest_corner) < 2:
                 self.position[1] -= nudge_amount
             else:
                 self.position[1] += nudge_amount
